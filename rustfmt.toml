@@ -1,0 +1,53 @@
+# This is a configuration file for the `rustfmt` tool.
+# Many `rustfmt` configuration options are still considered "unstable".
+# You need to configure your editor to format using `cargo +nightly fmt` instead of `cargo fmt`.
+
+# Overall style settings
+edition = "2024"
+unstable_features = true
+
+# Default `max_width` is 100 -- we increase that a bit.
+max_width = 120
+
+# Use the `max_width` setting to automatically adjust several other parameters:
+#   fn_call_width
+#   attr_fn_like_width
+#   struct_lit_width
+#   struct_variant_width
+#   array_width
+#   chain_width
+#   single_line_if_else_max_width
+# We go for the most compact formatting.
+use_small_heuristics = "Max"
+
+# Comments
+comment_width = 120
+wrap_comments = true
+format_code_in_doc_comments = true
+doc_comment_code_block_width = 120
+
+# Try to align struct fields.
+struct_field_align_threshold = 20
+
+# Attempt to align enum discriminants.
+enum_discrim_align_threshold = 40
+
+# Reorder `impl` items: `type` and `const` first, then macros and methods.
+reorder_impl_items = true
+
+# Denser function layout
+fn_params_layout = "Compressed"
+fn_single_line = true
+where_single_line = true
+
+# Put the `else {` on the next line instead of `} else {`.
+control_brace_style = "ClosingNextLine"
+
+# Import nesting & style
+imports_granularity = "Crate"
+imports_layout = "Vertical"
+
+# Other formatting settings
+format_strings = true
+condense_wildcard_suffixes = true
+match_block_trailing_comma = true

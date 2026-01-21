@@ -1,0 +1,30 @@
+[package]
+name = "gf2"
+version = "1.0.0"
+edition = "2024"
+authors = ["Nessan Fitzmaurice <nzznfitz+gh@icloud.com>"]
+description = "Working in bit-space a.k.a. GF(2)"
+license = "MIT"
+repository = "https://github.com/nessan/gf2-rs"
+readme = "README.md"
+keywords = ["bit-vector", "bit-matrix", "bit-polynomial", "linear algebra", "gf2"]
+categories = ["mathematics", "algorithms", "science"]
+
+# The fixed size bit-vector type, `BitArray`, only works if Rust's `generic_const_exprs` feature is enabled.
+# The syntax `p(x)` and `p(M)` for polynomials over bools and matrices needs the `fn_traits` and `unboxed_closures` features.
+# Rust considers these features "unstable" even though they have been available for a long time.
+# Rust out of the box does not support them so we have gated them behind a Cargo feature named `unstable`.
+#
+# To enable the extra capabilities:
+# - Use either the nightly released Rust compiler OR the stable compiler with `RUSTC_BOOTSTRAP=1` set in the environment.
+# - Open this crate's `unstable` features by using `cargo build --features unstable` or
+#   by adding `features = ["unstable"]` to your dependency declaration for `gf2`.
+
+[features]
+unstable = []
+
+[dependencies]
+
+[dev-dependencies]
+utilities_rs = "1.0.0"
+rand = { version = "0.9.1", features = ["small_rng"] }

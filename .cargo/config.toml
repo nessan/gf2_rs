@@ -1,0 +1,33 @@
+# This configuration file is for Cargo, the Rust package manager.
+# It sets up environment variables and command aliases to streamline development.
+
+# Enable the use of unstable Rust features by setting the RUSTC_BOOTSTRAP environment variable.
+# This allows us to use nightly-only features on stable Rust compilers.
+[env]
+RUSTC_BOOTSTRAP = "1"
+
+# We gate the any use of "unstable" features behind a Cargo feature named `unstable`.
+# We want those features enabled for all our local builds and tests etc.
+# To make that easier, we define some Cargo aliases that always enable the `unstable` feature.
+[alias]
+
+# Common development commands that don't depend on the compiler optimization level.
+c = "clean"
+d = "doc    --features unstable --open"
+k = "check  --features unstable"
+y = "clippy --features unstable"
+z = "clippy -- -W clippy::pedantic"
+
+# Unoptimized build, run, test, etc. with `unstable` features enabled.
+b = "build  --features unstable"
+e = "run    --features unstable --example"
+h = "run    --features unstable --bench"
+r = "run    --features unstable"
+t = "test   --features unstable"
+
+# Optimized build, run, test, etc. with `unstable` features enabled.
+br = "build  --release --features unstable"
+er = "run    --release --features unstable --example"
+hr = "run    --release --features unstable --bench"
+rr = "run    --release --features unstable"
+tr = "test   --release --features unstable"
