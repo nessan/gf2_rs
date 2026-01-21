@@ -7,7 +7,7 @@ description = "Working in bit-space a.k.a. GF(2)"
 license = "MIT"
 repository = "https://github.com/nessan/gf2-rs"
 readme = "README.md"
-keywords = ["bit-vector", "bit-matrix", "bit-polynomial", "linear algebra", "gf2"]
+keywords = ["bit-vector", "bit-matrix", "bit-polynomial", "linear-algebra", "gf2"]
 categories = ["mathematics", "algorithms", "science"]
 
 # The fixed size bit-vector type, `BitArray`, only works if Rust's `generic_const_exprs` feature is enabled.
