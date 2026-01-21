@@ -131,18 +131,16 @@ If the `unstable` feature is not enabled, the `BitArray` type will not be availa
 
 This Rust crate started life as a _port_ of an equivalent header-only [C++ library][], which has its own [documentation site][].
 
-The port was done _manually_ -- at least for now, LLMs cannot handle this sort of translation task and produce anything that is at all readable or verifiable.
+We ported to Rust _manually_, as, at least for now, LLMs cannot handle this sort of translation task and produce anything that is at all readable or verifiable.
 
 As you might expect with a rewrite, the new version considerably improved on the original. There were two beneficial factors at play:
 
 - We approached the problem anew, and fresh eyes quickly saw several areas for improvement that had nothing to do with the implementation language per se.
 - Other improvements came about _because_ we were using a different language with its own idioms, strengths, and weaknesses that forced some new thinking.
 
-The C++ version has been completely rewritten to incorporate those improvements and to backport some of the new ideas from using Rust.
+We rewrote the C++ version to incorporate those improvements and to backport some of the new ideas from using Rust.
 
-Writing solutions to the same problem in multiple languages has significant benefits, but of course, it is rather expensive and unlikely to find favour in commercial settings.
-
-Perhaps we should repeat the exercise for a third language someday!
+Writing solutions to the same problem in multiple languages has significant benefits, but of course, it is expensive and hard to justify in commercial settings. Perhaps we should repeat the exercise in a third language someday!
 
 For the most part, the two versions are feature equivalent (a few things are not possible in Rust). There are some name changes to accommodate idioms in the languages; for example, the BitSpan C++ class corresponds to the `BitSlice` type in Rust (C++ uses spans, Rust uses slices), C++ vectors have a `size()` method, Rust vectors have a `len()` method, and so on.
 
