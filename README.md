@@ -92,7 +92,7 @@ The polynomial sum c(m):
 
 There are other bit-vector and even some bit-matrix crates available from the [crate registry](crates.io).
 
-However, the types in those crates are typically designed to collect bits into _sets_ and don't have any numerical methods at all. Neither does the standard library's vector class `Vec`.
+However, the types in those crates are typically designed to collect bits into _sets_ and don't have any numerical methods. Neither does the standard library's vector class `Vec`.
 
 On the other hand, several well-known linear algebra libraries, such as [`Eigen`][] in C++ and [`nalgebra`][] in Rust, exist. Those packages efficiently manage all the standard _numeric_ types (floats, doubles, integers, etc.) but do not correctly handle [GF(2)]. You can create matrices of integers whose elements are 0 or 1, but there is no built-in knowledge in those libraries that arithmetic is mod 2.
 
@@ -112,7 +112,7 @@ The crate has no dependencies beyond the standard library.
 
 ## Unstable Features
 
-Some APIs (notably the entire [`BitArray][] type, and the [`BitPoly`][] function-call syntax `p(x)`/`p(M)`) require features that Rust considers "unstable" at the time of writing (though the features have been available for a very long time).
+Some APIs (notably the entire [`BitArray`][] type, and the [`BitPoly`][] function-call syntax `p(x)`/`p(M)`) require features that Rust considers "unstable" at the time of writing (though the features have been available for a very long time).
 
 To use those APIs, you can either use stable Rust with the environment variable `RUSTC_BOOTSTRAP` set to `1` or use the nightly Rust compiler.
 
@@ -131,7 +131,7 @@ If the `unstable` feature is not enabled, the `BitArray` type will not be availa
 
 This Rust crate started life as a _port_ of an equivalent header-only [C++ library][], which has its own [documentation site][].
 
-The port was done _manually_ --- at least for now, LLM's cannot handle this sort of translation task and produce anything that is at all readable or verifiable.
+The port was done _manually_ -- at least for now, LLMs cannot handle this sort of translation task and produce anything that is at all readable or verifiable.
 
 As you might expect with a rewrite, the new version considerably improved on the original. There were two beneficial factors at play:
 
@@ -144,7 +144,7 @@ Writing solutions to the same problem in multiple languages has significant bene
 
 Perhaps we should repeat the exercise for a third language someday!
 
-For the most part, the two versions are feature equivalent (a few things are not possible in Rust). There are some name changes to accommodate language idioms, for example, the `BitSpan` C++ class is the `BitSlice` type in Rust (C++ uses spans, Rust uses slices), C++ vectors have a `size()` method, Rust vectors have a `len()` method, and so on.
+For the most part, the two versions are feature equivalent (a few things are not possible in Rust). There are some name changes to accommodate idioms in the languages; for example, the BitSpan C++ class corresponds to the `BitSlice` type in Rust (C++ uses spans, Rust uses slices), C++ vectors have a `size()` method, Rust vectors have a `len()` method, and so on.
 
 The two versions have very similar performance characteristics, with neither being significantly faster than the other in most scenarios.
 
