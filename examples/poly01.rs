@@ -24,8 +24,8 @@ fn main() {
 
     // Random polynomial & matrix
     type Word = usize;
-    let p: BitPoly<Word> = BitPoly::random(d);
-    let mut mat: BitMat<Word> = BitMat::random(n, n);
+    let p: BitPolynomial<Word> = BitPolynomial::random(d);
+    let mut mat: BitMatrix<Word> = BitMatrix::random(n, n);
 
     // To do something in the loop, we count how often the top right element from the polynomial evaluation is 1.
     let mut count: usize = 0;

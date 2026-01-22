@@ -3,19 +3,19 @@
 #![allow(non_snake_case)]
 
 use crate::{
-    BitMat,
+    BitMatrix,
     BitStore,
-    BitVec,
+    BitVector,
     Unsigned,
 };
 
 #[doc = include_str!("../docs/gauss.md")]
 pub struct BitGauss<Word: Unsigned = usize> {
     // The *row echelon form* of the matrix `A` where we are solving `A = b`.
-    A_ref: BitMat<Word>,
+    A_ref: BitMatrix<Word>,
 
     // The equivalent transformed version of the vector `b` where we are solving `A.x = b`.
-    b_ref: BitVec<Word>,
+    b_ref: BitVector<Word>,
 
     // The rank of the matrix `A`. This is also the number of non-zero rows in `A_ref`
     rank: usize,
@@ -37,8 +37,8 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::from_string("111 111 111").unwrap();
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::from_string("111 111 111").unwrap();
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.rank(), 1);
     /// assert_eq!(solver.is_underdetermined(), true);
@@ -47,7 +47,7 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// assert_eq!(solver.solution_count(), 4);
     /// ```
     #[must_use]
-    pub fn new(A: &BitMat<Word>, b: &BitVec<Word>) -> Self {
+    pub fn new(A: &BitMatrix<Word>, b: &BitVector<Word>) -> Self {
         assert!(A.is_square(), "The matrix must be square not {}x{}", A.rows(), A.cols());
         assert!(A.rows() == b.len(), "The matrix and vector must have the same number of rows");
 
@@ -101,8 +101,8 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::from_string("111 111 111").unwrap();
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::from_string("111 111 111").unwrap();
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.rank(), 1);
     /// ```
@@ -115,8 +115,8 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::from_string("111 111 111").unwrap();
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::from_string("111 111 111").unwrap();
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.free_count(), 2);
     /// ```
@@ -129,8 +129,8 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::from_string("111 111 111").unwrap();
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::from_string("111 111 111").unwrap();
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.is_underdetermined(), true);
     /// ```
@@ -145,8 +145,8 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::from_string("111 111 111").unwrap();
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::from_string("111 111 111").unwrap();
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert!(solver.is_consistent());
     /// ```
@@ -162,19 +162,19 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::identity(3);
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::identity(3);
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.x().unwrap().to_string(), "111");
     /// ```
     #[must_use]
-    pub fn x(&self) -> Option<BitVec<Word>> {
+    pub fn x(&self) -> Option<BitVector<Word>> {
         if !self.is_consistent() {
             return None;
         }
 
         // Create a random starting point.
-        let mut result = BitVec::random(self.b_ref.len());
+        let mut result = BitVector::random(self.b_ref.len());
 
         // All non-free variables will be overwritten by back substitution.
         self.back_substitute_into(&mut result);
@@ -191,8 +191,8 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::from_string("111 111 111").unwrap();
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::from_string("111 111 111").unwrap();
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.solution_count(), 4);
     /// ```
@@ -214,21 +214,21 @@ impl<Word: Unsigned> BitGauss<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::from_string("111 111 111").unwrap();
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::from_string("111 111 111").unwrap();
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.solution_count(), 4);
     /// assert_eq!(solver.xi(0).unwrap().to_string(), "100", "xi(0) = 100");
     /// assert_eq!(solver.xi(1).unwrap().to_string(), "010", "xi(1) = 010");
     /// assert_eq!(solver.xi(2).unwrap().to_string(), "001", "xi(2) = 001");
     /// assert_eq!(solver.xi(3).unwrap().to_string(), "111", "xi(3) = 111");
-    /// let A: BitMat = BitMat::identity(3);
+    /// let A: BitMatrix = BitMatrix::identity(3);
     /// let solver: BitGauss = BitGauss::new(&A, &b);
     /// assert_eq!(solver.solution_count(), 1);
     /// assert_eq!(solver.xi(0).unwrap().to_string(), "111", "xi(0) = 111");
     /// ```
     #[must_use]
-    pub fn xi(&self, i: usize) -> Option<BitVec<Word>> {
+    pub fn xi(&self, i: usize) -> Option<BitVector<Word>> {
         if !self.is_consistent() {
             return None;
         }
@@ -237,7 +237,7 @@ impl<Word: Unsigned> BitGauss<Word> {
         }
 
         // We start with a zero vector and then set the free variable slots to the fixed bit pattern for `i`.
-        let mut x = BitVec::zeros(self.b_ref.len());
+        let mut x = BitVector::zeros(self.b_ref.len());
         let mut i = i;
         for f in 0..self.free.len() {
             x.set(self.free[f], i & 1 != 0);
@@ -250,7 +250,7 @@ impl<Word: Unsigned> BitGauss<Word> {
     }
 
     /// Helper function that performs back substitution to solve for the non-free variables in `x`.
-    fn back_substitute_into(&self, x: &mut BitVec<Word>) {
+    fn back_substitute_into(&self, x: &mut BitVector<Word>) {
         // Iterate from the bottom up, starting at the first non-zero row, solving for the non-free variables in `x`.
         for i in (0..self.rank).rev() {
             let j = self.A_ref[i].first_set().unwrap();

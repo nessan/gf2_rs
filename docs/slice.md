@@ -6,7 +6,7 @@ A [`BitSlice`] is a vector-like, non-owning _view_ into a non-empty range of bit
 The bits are compactly stored somewhere else in unsigned integer words.
 The default word type is `usize`.
 
-Bit-slices are typically created by borrowing a contiguous range of bits from a [`BitVec`] or a [`BitArray`] using the [`BitStore::slice`] or [`BitStore::slice_mut`] methods.
+Bit-slices are typically created by borrowing a contiguous range of bits from a [`BitVector`] or a [`BitArray`] using the [`BitStore::slice`] or [`BitStore::slice_mut`] methods.
 
 The type implements the [`BitStore`] trait, which provides a rich API for manipulating the bits in the vector.
 This means that bit-slices can be used anywhere a bit-store is expected.
@@ -156,7 +156,7 @@ The following methods create or fill _independent_ bit-vectors with copies of so
 
 | Method                      | Description                                                                              |
 | --------------------------- | ---------------------------------------------------------------------------------------- |
-| [`BitStore::sub`]           | Returns a new [`BitVec`] encompassing the bits in a half-open range.                     |
+| [`BitStore::sub`]           | Returns a new [`BitVector`] encompassing the bits in a half-open range.                  |
 | [`BitStore::split_at_into`] | Fills two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`.           |
 | [`BitStore::split_at`]      | Returns two new two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`. |
 
@@ -298,7 +298,7 @@ We have implemented several foreign traits from the standard library for bit-vec
 <!-- Internal Reference Links -->
 
 [`BitArray`]: crate::BitArray
-[`BitVec`]: crate::BitVec
+[`BitVector`]: crate::BitVector
 [`BitSlice`]: crate::BitSlice
 [`Unsigned`]: crate::Unsigned
 [`Bits`]: crate::Bits

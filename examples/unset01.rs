@@ -12,7 +12,7 @@ fn main() {
     let prob = 0.5;
     let n_trials = 10;
 
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
 
     println!("Testing forward search ... ");
     for trial in 0..n_trials {

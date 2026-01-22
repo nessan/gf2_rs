@@ -1,7 +1,7 @@
 //! [`BitStore`] is the core trait implemented by bit-arrays, bit-vectors, and bit-slices.
 use crate::{
     BitSlice,
-    BitVec,
+    BitVector,
     Bits,
     SetBits,
     UnsetBits,
@@ -26,7 +26,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::zeros(10);
+    /// let v: BitVector = BitVector::zeros(10);
     /// assert_eq!(v.len(), 10);
     /// ```
     fn len(&self) -> usize;
@@ -56,7 +56,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::zeros(10);
+    /// let v: BitVector<u8> = BitVector::zeros(10);
     /// assert_eq!(v.words(), 2);
     /// ```
     fn words(&self) -> usize;
@@ -66,8 +66,9 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Note
     /// This method is used to access the bits in the store _as if_ they were perfectly aligned with the word
     /// boundaries. It should appear a bit `0` in the store is located at the least significant bit of `word(0)`.
-    /// This is trivial for the `BitVec` and `BitArray` types, but bit-slices typically need to synthesise appropriate
-    /// "words" on demand from a couple of the "real" words that back the owning bit-vector or bit-array.
+    /// This is trivial for the `BitVector` and `BitArray` types, but bit-slices typically need to synthesise
+    /// appropriate "words" on demand from a couple of the "real" words that back the owning bit-vector or
+    /// bit-array.
     ///
     /// For example, if the store has 18 elements, then `word(0)` should cover bit elements 0 through 7, `word(1)` the
     /// bit elements 8 through 15, and `word(2)` the bit elements 16 and 17 and the rest of the bits in that word
@@ -78,7 +79,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::zeros(10);
+    /// let v: BitVector = BitVector::zeros(10);
     /// assert_eq!(v.word(0), 0);
     /// ```
     fn word(&self, i: usize) -> Word;
@@ -88,8 +89,9 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Note
     /// This method is used to mutate the bits in the store as if they were perfectly aligned with the word boundaries.
     /// It should _look as if_ bit `0` in the store is located at the least significant bit of `word(0)`.
-    /// This is trivial for the `BitVec` and `BitArray` types, but bit-slices typically need to synthesise appropriate
-    /// "words" on demand from a couple of the "real" words that back the owning bit-vector or bit-array.
+    /// This is trivial for the `BitVector` and `BitArray` types, but bit-slices typically need to synthesise
+    /// appropriate "words" on demand from a couple of the "real" words that back the owning bit-vector or
+    /// bit-array.
     ///
     /// For example, if the store has 18 elements, then `set_word(0,v)` should set bit elements 0 through 7,
     /// `set_word(1,v)` the bit elements 8 through 15, and `set_word(2,v)` the bit elements 16 and 17 and leave the
@@ -99,7 +101,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     ///
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.set_word(0, 0);
     /// assert_eq!(v.to_string(), "0000000000");
     /// ```
@@ -117,7 +119,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// assert_eq!(v.get(0), true);
     /// assert_eq!(v.get(1), false);
     /// assert_eq!(v.get(8), true);
@@ -138,9 +140,9 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::ones(10);
+    /// let v: BitVector = BitVector::ones(10);
     /// assert!(v.first() == true);
-    /// let v: BitVec = BitVec::zeros(10);
+    /// let v: BitVector = BitVector::zeros(10);
     /// assert!(v.first() == false);
     /// ```
     #[inline]
@@ -157,9 +159,9 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::ones(10);
+    /// let v: BitVector = BitVector::ones(10);
     /// assert!(v.last() == true);
-    /// let v: BitVec = BitVec::zeros(10);
+    /// let v: BitVector = BitVector::zeros(10);
     /// assert!(v.last() == false);
     /// ```
     #[inline]
@@ -180,7 +182,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.set(0, true);
     /// assert_eq!(v.to_string(), "1000000000");
     /// v.set(1, true);
@@ -208,7 +210,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::ones(10);
+    /// let mut v: BitVector = BitVector::ones(10);
     /// v.flip(0);
     /// assert_eq!(v.to_string(), "0111111111");
     /// v.flip(1);
@@ -232,7 +234,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.set(0, true);
     /// assert_eq!(v.to_string(), "1000000000");
     /// v.swap(0, 1);
@@ -277,7 +279,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::new();
+    /// let mut v: BitVector = BitVector::new();
     /// assert!(v.is_empty());
     /// v.push(true);
     /// assert!(!v.is_empty());
@@ -293,7 +295,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(12);
+    /// let mut v: BitVector = BitVector::zeros(12);
     /// assert!(v.any() == false);
     /// v.set_all(true);
     /// assert!(v.any() == true);
@@ -318,7 +320,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(12);
+    /// let mut v: BitVector = BitVector::zeros(12);
     /// assert!(v.all() == false);
     /// v.set(1, true);
     /// assert!(v.all() == false);
@@ -356,7 +358,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(12);
+    /// let mut v: BitVector = BitVector::zeros(12);
     /// assert!(v.none() == true);
     /// v.set(1, true);
     /// assert!(v.none() == false);
@@ -377,7 +379,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.set_all(true);
     /// assert_eq!(v.to_string(), "1111111111");
     /// ```
@@ -394,7 +396,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::ones(10);
+    /// let mut v: BitVector = BitVector::ones(10);
     /// v.flip_all();
     /// assert_eq!(v.to_string(), "0000000000");
     /// ```
@@ -410,13 +412,13 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let u: gf2::BitVec = gf2::BitVec::ones(3);
+    /// let u: gf2::BitVector = gf2::BitVector::ones(3);
     /// let v = u.flipped();
     /// assert_eq!(u.to_binary_string(), "111");
     /// assert_eq!(v.to_binary_string(), "000");
     /// ```
-    fn flipped(&self) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn flipped(&self) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.flip_all();
         result
     }
@@ -429,13 +431,13 @@ pub trait BitStore<Word: Unsigned>: Sized {
     ///
     /// # Notes:
     /// 1. The size of the store *must* match the number of bits in the source type.
-    /// 2. We allow *any* unsigned word source, e.g. copying a single `u64` into a `BitVec<u8>` of size 64.
+    /// 2. We allow *any* unsigned word source, e.g. copying a single `u64` into a `BitVector<u8>` of size 64.
     /// 3. The least-significant bit of the source becomes the bit at index 0 in the store.
     ///
     /// # Example
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(16);
+    /// let mut v: BitVector = BitVector::zeros(16);
     /// let src: u16 = 0b1010101010101010;
     /// v.copy_unsigned(src);
     /// assert_eq!(v.to_string(), "0101010101010101");
@@ -480,7 +482,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// This is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying
     /// `Unsigned` word type for their storage -- i.e., the `Word` type for `self` may differ from the `SrcWord` type
     /// for the bit-store `src`. You can use it to convert between different `Word` type stores (e.g., from
-    /// `BitVec<u32>` to `BitVec<u8>`) as long as the sizes match.
+    /// `BitVector<u32>` to `BitVector<u8>`) as long as the sizes match.
     ///
     /// # Panics
     /// This method panics if the number of elements in this store and the `src` do not match.
@@ -488,16 +490,17 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let src: BitVec = BitVec::from_string("010101010101010101010101010101010101010101010101010101010101").unwrap();
-    /// let mut dst: BitVec = BitVec::zeros(src.len());
+    /// let src: BitVector =
+    ///     BitVector::from_string("010101010101010101010101010101010101010101010101010101010101").unwrap();
+    /// let mut dst: BitVector = BitVector::zeros(src.len());
     /// dst.copy_store(&src);
     /// assert_eq!(dst.to_string(), src.to_string());
-    /// let src: BitVec<u8> = BitVec::from_string("1011001110001111").unwrap();
-    /// let mut dst: BitVec<u32> = BitVec::zeros(src.len());
+    /// let src: BitVector<u8> = BitVector::from_string("1011001110001111").unwrap();
+    /// let mut dst: BitVector<u32> = BitVector::zeros(src.len());
     /// dst.copy_store(&src);
     /// assert_eq!(dst.to_string(), src.to_string());
-    /// let src: BitVec<u16> = BitVec::from_string("101100111000111110110011100011111011001110001111").unwrap();
-    /// let mut dst: BitVec<u8> = BitVec::zeros(src.len());
+    /// let src: BitVector<u16> = BitVector::from_string("101100111000111110110011100011111011001110001111").unwrap();
+    /// let mut dst: BitVector<u8> = BitVector::zeros(src.len());
     /// dst.copy_store(&src);
     /// assert_eq!(dst.to_string(), src.to_string());
     /// ```
@@ -573,7 +576,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.copy_fn(|i| i % 2 == 0);
     /// assert_eq!(v.len(), 10);
     /// assert_eq!(v.to_string(), "1010101010");
@@ -602,10 +605,10 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.fill_random_biased_seeded(1.2, 42); // All bits set
     /// assert_eq!(v.count_ones(), 10);
-    /// let mut u: BitVec = BitVec::zeros(10);
+    /// let mut u: BitVector = BitVector::zeros(10);
     /// u.fill_random_biased_seeded(0.5, 42); // Using same seed for u and v.
     /// v.fill_random_biased_seeded(0.5, 42);
     /// assert_eq!(u, v);
@@ -657,7 +660,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.fill_random_biased(0.5);
     /// assert_eq!(v.len(), 10);
     /// v.fill_random_biased(1.2); // All bits set
@@ -671,8 +674,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
-    /// let mut u: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
+    /// let mut u: BitVector = BitVector::zeros(10);
     /// u.fill_random_seeded(42); // Using same seed for u and v.
     /// v.fill_random_seeded(42);
     /// assert_eq!(u, v);
@@ -685,7 +688,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut u: BitVec = BitVec::zeros(10);
+    /// let mut u: BitVector = BitVector::zeros(10);
     /// u.fill_random();
     /// assert_eq!(u.len(), 10);
     /// ```
@@ -700,7 +703,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(12);
+    /// let mut v: BitVector = BitVector::zeros(12);
     /// assert_eq!(v.count_ones(), 0);
     /// v.set_all(true);
     /// assert_eq!(v.count_ones(), 12);
@@ -718,7 +721,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(12);
+    /// let mut v: BitVector = BitVector::zeros(12);
     /// assert_eq!(v.count_zeros(), 12);
     /// v.set(1, true);
     /// assert_eq!(v.count_zeros(), 11);
@@ -732,13 +735,13 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(37);
+    /// let mut v: BitVector = BitVector::zeros(37);
     /// assert_eq!(v.leading_zeros(), 37);
     /// v.set(27, true);
     /// assert_eq!(v.leading_zeros(), 27);
-    /// let v: BitVec = BitVec::ones(10);
+    /// let v: BitVector = BitVector::ones(10);
     /// assert_eq!(v.leading_zeros(), 0, "v = {v} so expected leading zeros to be 0");
-    /// let v: BitVec = BitVec::unit(3, 41);
+    /// let v: BitVector = BitVector::unit(3, 41);
     /// assert_eq!(v.leading_zeros(), 3);
     /// ```
     fn leading_zeros(&self) -> usize {
@@ -758,7 +761,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(27);
+    /// let mut v: BitVector = BitVector::zeros(27);
     /// assert_eq!(v.trailing_zeros(), 27);
     /// v.set(0, true);
     /// assert_eq!(v.trailing_zeros(), 26);
@@ -787,7 +790,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::zeros(37);
+    /// let mut v: BitVector<u8> = BitVector::zeros(37);
     /// assert_eq!(v.first_set(), None);
     /// v.set(2, true);
     /// assert_eq!(v.first_set(), Some(2));
@@ -815,7 +818,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(37);
+    /// let mut v: BitVector = BitVector::zeros(37);
     /// assert_eq!(v.last_set(), None);
     /// v.set(2, true);
     /// assert_eq!(v.last_set(), Some(2));
@@ -843,7 +846,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(37);
+    /// let mut v: BitVector = BitVector::zeros(37);
     /// assert_eq!(v.next_set(0), None);
     /// v.set(2, true);
     /// v.set(27, true);
@@ -882,7 +885,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(37);
+    /// let mut v: BitVector = BitVector::zeros(37);
     /// assert_eq!(v.previous_set(0), None);
     /// v.set(2, true);
     /// v.set(27, true);
@@ -925,7 +928,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::ones(39);
+    /// let mut v: BitVector<u8> = BitVector::ones(39);
     /// assert_eq!(v.first_unset(), None);
     /// v.set(2, false);
     /// assert_eq!(v.first_unset(), Some(2));
@@ -957,7 +960,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::ones(37);
+    /// let mut v: BitVector = BitVector::ones(37);
     /// assert_eq!(v.last_unset(), None);
     /// v.set(2, false);
     /// assert_eq!(v.last_unset(), Some(2));
@@ -989,7 +992,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::ones(37);
+    /// let mut v: BitVector<u8> = BitVector::ones(37);
     /// assert_eq!(v.next_unset(0), None);
     /// v.set(2, false);
     /// v.set(27, false);
@@ -1033,7 +1036,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::ones(37);
+    /// let mut v: BitVector<u8> = BitVector::ones(37);
     /// assert_eq!(v.previous_unset(0), None);
     /// v.set(2, false);
     /// v.set(27, false);
@@ -1081,7 +1084,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::ones(10);
+    /// let mut v: BitVector = BitVector::ones(10);
     /// v.set(5, false);
     /// let bits: Vec<bool> = v.bits().collect();
     /// assert_eq!(bits, vec![true, true, true, true, true, false, true, true, true, true]);
@@ -1094,7 +1097,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// type BV = BitVec<u8>;
+    /// type BV = BitVector<u8>;
     /// let v = BV::ones(10);
     /// let set_indices: Vec<usize> = v.set_bits().collect();
     /// assert_eq!(set_indices, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -1107,7 +1110,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// type BV = BitVec<u8>;
+    /// type BV = BitVector<u8>;
     /// let v = BV::zeros(10);
     /// let unset_indices: Vec<usize> = v.unset_bits().collect();
     /// assert_eq!(unset_indices, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -1126,7 +1129,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::ones(10);
+    /// let v: BitVector<u8> = BitVector::ones(10);
     /// let words: Vec<u8> = v.store_words().collect();
     /// assert_eq!(words, vec![0b1111_1111_u8, 0b0000_0011_u8]);
     /// ```
@@ -1141,7 +1144,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::ones(10);
+    /// let v: BitVector<u8> = BitVector::ones(10);
     /// let words = v.to_words();
     /// assert_eq!(words, vec!(255, 3));
     /// ```
@@ -1160,7 +1163,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// let s1 = v.slice(1..5);
     /// assert_eq!(s1.to_string(), "0101");
     /// ```
@@ -1177,7 +1180,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::alternating(10);
+    /// let mut v: BitVector = BitVector::alternating(10);
     /// let mut slice = v.slice_mut(1..5);
     /// assert_eq!(slice.to_string(), "0101");
     /// ```
@@ -1227,14 +1230,14 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Example
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// let mut s = v.sub(1..5);
     /// assert_eq!(s.to_string(), "0101");
     /// s.set_all(true);
     /// assert_eq!(s.to_string(), "1111");
     /// assert_eq!(v.to_string(), "1010101010");
     /// ```
-    fn sub<R: RangeBounds<usize>>(&self, range: R) -> BitVec<Word> { BitVec::from_store(&self.slice(range)) }
+    fn sub<R: RangeBounds<usize>>(&self, range: R) -> BitVector<Word> { BitVector::from_store(&self.slice(range)) }
 
     // ----------------------------------------------------------------------------------------------------------------
     // Associated methods that split the store into two parts.
@@ -1256,14 +1259,14 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
-    /// let mut left: BitVec = BitVec::new();
-    /// let mut right: BitVec = BitVec::new();
+    /// let v: BitVector = BitVector::alternating(10);
+    /// let mut left: BitVector = BitVector::new();
+    /// let mut right: BitVector = BitVector::new();
     /// v.split_at_into(5, &mut left, &mut right);
     /// assert_eq!(left.to_string(), "10101");
     /// assert_eq!(right.to_string(), "01010");
     /// ```
-    fn split_at_into(&self, at: usize, left: &mut BitVec<Word>, right: &mut BitVec<Word>) {
+    fn split_at_into(&self, at: usize, left: &mut BitVector<Word>, right: &mut BitVector<Word>) {
         assert!(at <= self.len(), "split point {at} is beyond the end of the bit-vector");
         left.clear();
         right.clear();
@@ -1282,14 +1285,14 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// let (left, right) = v.split_at(5);
     /// assert_eq!(left.to_string(), "10101");
     /// assert_eq!(right.to_string(), "01010");
     /// ```
-    fn split_at(&self, at: usize) -> (BitVec<Word>, BitVec<Word>) {
-        let mut left = BitVec::new();
-        let mut right = BitVec::new();
+    fn split_at(&self, at: usize) -> (BitVector<Word>, BitVector<Word>) {
+        let mut left = BitVector::new();
+        let mut right = BitVector::new();
         self.split_at_into(at, &mut left, &mut right);
         (left, right)
     }
@@ -1311,12 +1314,12 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::ones(10);
-    /// let mut dst: BitVec<u8> = BitVec::zeros(10);
+    /// let mut v: BitVector<u8> = BitVector::ones(10);
+    /// let mut dst: BitVector<u8> = BitVector::zeros(10);
     /// v.riffled_into(&mut dst);
     /// assert_eq!(dst.to_string(), "1010101010101010101");
     /// ```
-    fn riffled_into(&self, dst: &mut BitVec<Word>) {
+    fn riffled_into(&self, dst: &mut BitVector<Word>) {
         // Not a lot to do if the bit-vector is empty or has only one bit. With two bits `ab` we return `a0b`.
         let ln = self.len();
         if ln < 2 {
@@ -1352,13 +1355,13 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::ones(10);
+    /// let v: BitVector<u8> = BitVector::ones(10);
     /// let dst = v.riffled();
     /// assert_eq!(dst.to_string(), "1010101010101010101");
     /// ```
     #[must_use]
-    fn riffled(&self) -> BitVec<Word> {
-        let mut dst = BitVec::new();
+    fn riffled(&self) -> BitVector<Word> {
+        let mut dst = BitVector::new();
         self.riffled_into(&mut dst);
         dst
     }
@@ -1378,7 +1381,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     ///
     /// # Note
     /// - We have also implemented the `Mul` trait to overload the `*` operator to return the same thing.
-    /// - See the `BitMat` documentation for matrix-vector, vector-matrix, and matrix-matrix multiplication.
+    /// - See the `BitMatrix` documentation for matrix-vector, vector-matrix, and matrix-matrix multiplication.
     ///
     /// # Panics
     /// In debug mode, panics if the lengths of `self` and `rhs` do not match.
@@ -1386,8 +1389,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: BitVec = BitVec::alternating(10);
-    /// let v2: BitVec = BitVec::alternating(10) >> 1;
+    /// let v1: BitVector = BitVector::alternating(10);
+    /// let v2: BitVector = BitVector::alternating(10) >> 1;
     /// assert_eq!(v1.dot(&v1), true);
     /// assert_eq!(v1.dot(&v2), false);
     /// ```
@@ -1413,19 +1416,19 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let lhs: BitVec = BitVec::ones(3);
-    /// let rhs: BitVec = BitVec::ones(2);
+    /// let lhs: BitVector = BitVector::ones(3);
+    /// let rhs: BitVector = BitVector::ones(2);
     /// let result = lhs.convolved_with(&rhs);
     /// assert_eq!(result.to_string(), "1001");
     /// ```
-    fn convolved_with<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVec<Word> {
+    fn convolved_with<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVector<Word> {
         // Edge case: if either vector is empty then the convolution is empty.
         if self.is_empty() || rhs.is_empty() {
-            return BitVec::new();
+            return BitVector::new();
         }
 
         // Generally the result will have length `self.len() + other.len() - 1` (could be all zeros).
-        let mut result = BitVec::zeros(self.len() + rhs.len() - 1);
+        let mut result = BitVector::zeros(self.len() + rhs.len() - 1);
 
         // If either vector is all zeros then the convolution is all zeros.
         if self.none() || rhs.first_set().is_none() {
@@ -1472,7 +1475,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// assert_eq!(v.to_binary_string(), "1010101010");
     /// ```
     fn to_binary_string(&self) -> String { self.to_custom_binary_string("", "", "") }
@@ -1485,9 +1488,9 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// assert_eq!(v.to_pretty_string(), "[1 0 1 0 1 0 1 0 1 0]");
-    /// let v: BitVec = BitVec::new();
+    /// let v: BitVector = BitVector::new();
     /// assert_eq!(v.to_pretty_string(), "[]");
     /// ```
     fn to_pretty_string(&self) -> String { self.to_custom_binary_string(" ", "[", "]") }
@@ -1500,7 +1503,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// assert_eq!(v.to_custom_binary_string(" ", "[", "]"), "[1 0 1 0 1 0 1 0 1 0]");
     fn to_custom_binary_string(&self, separator: &str, left: &str, right: &str) -> String {
         // Edge case: No elements in the type, return the empty string.
@@ -1563,13 +1566,13 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::new();
+    /// let v: BitVector = BitVector::new();
     /// assert_eq!(v.to_hex_string(), "");
-    /// let v: BitVec = BitVec::ones(4);
+    /// let v: BitVector = BitVector::ones(4);
     /// assert_eq!(v.to_hex_string(), "F");
-    /// let v: BitVec = BitVec::ones(5);
+    /// let v: BitVector = BitVector::ones(5);
     /// assert_eq!(v.to_hex_string(), "F1.2");
-    /// let v: BitVec = BitVec::alternating(8);
+    /// let v: BitVector = BitVector::alternating(8);
     /// assert_eq!(v.to_hex_string(), "AA");
     /// ```
     fn to_hex_string(&self) -> String {
@@ -1628,7 +1631,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(20);
+    /// let v: BitVector = BitVector::alternating(20);
     /// println!("{}", v.describe());
     /// ```
     fn describe(&self) -> String {
@@ -1664,7 +1667,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: gf2::BitVec = gf2::BitVec::ones(10);
+    /// let mut bv: gf2::BitVector = gf2::BitVector::ones(10);
     /// bv.left_shift(3);
     /// assert_eq!(bv.to_string(), "1111111000");
     /// ```
@@ -1726,7 +1729,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: gf2::BitVec = gf2::BitVec::ones(10);
+    /// let v1: gf2::BitVector = gf2::BitVector::ones(10);
     /// let v2 = v1.left_shifted(3);
     /// assert_eq!(v1.to_string(), "1111111111");
     /// assert_eq!(v2.to_string(), "1111111000");
@@ -1736,8 +1739,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// assert_eq!(v3.to_string(), "1111000");
     /// assert_eq!(s2.to_string(), "1111111");
     /// ```
-    fn left_shifted(&self, shift: usize) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn left_shifted(&self, shift: usize) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.left_shift(shift);
         result
     }
@@ -1754,7 +1757,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: gf2::BitVec = gf2::BitVec::ones(10);
+    /// let mut bv: gf2::BitVector = gf2::BitVector::ones(10);
     /// bv.right_shift(3);
     /// assert_eq!(bv.to_string(), "0001111111");
     /// ```
@@ -1813,7 +1816,7 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: gf2::BitVec = gf2::BitVec::ones(10);
+    /// let v1: gf2::BitVector = gf2::BitVector::ones(10);
     /// let v2 = v1.right_shifted(3);
     /// assert_eq!(v1.to_string(), "1111111111");
     /// assert_eq!(v2.to_string(), "0001111111");
@@ -1823,8 +1826,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// assert_eq!(v3.to_string(), "0000001");
     /// assert_eq!(s2.to_string(), "0001111");
     /// ```
-    fn right_shifted(&self, shift: usize) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn right_shifted(&self, shift: usize) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.right_shift(shift);
         result
     }
@@ -1841,8 +1844,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// v1.xor_eq(&v2);
     /// assert_eq!(v1.to_string(), "1111111111");
     /// assert_eq!(v2.to_string(), "0101010101");
@@ -1863,15 +1866,15 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// let v3 = v1.xor(&v2);
     /// assert_eq!(v1.to_string(), "1010101010");
     /// assert_eq!(v2.to_string(), "0101010101");
     /// assert_eq!(v3.to_string(), "1111111111");
     /// ```
-    fn xor<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn xor<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.xor_eq(rhs);
         result
     }
@@ -1884,8 +1887,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// v1.and_eq(&v2);
     /// assert_eq!(v1.to_string(), "0000000000");
     /// assert_eq!(v2.to_string(), "0101010101");
@@ -1906,15 +1909,15 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// let v3 = v1.and(&v2);
     /// assert_eq!(v1.to_string(), "1010101010");
     /// assert_eq!(v2.to_string(), "0101010101");
     /// assert_eq!(v3.to_string(), "0000000000");
     /// ```
-    fn and<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn and<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.and_eq(rhs);
         result
     }
@@ -1927,8 +1930,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// v1.or_eq(&v2);
     /// assert_eq!(v1.to_string(), "1111111111");
     /// assert_eq!(v2.to_string(), "0101010101");
@@ -1949,15 +1952,15 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// let v3 = v1.or(&v2);
     /// assert_eq!(v1.to_string(), "1010101010");
     /// assert_eq!(v2.to_string(), "0101010101");
     /// assert_eq!(v3.to_string(), "1111111111");
     /// ```
-    fn or<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn or<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.or_eq(rhs);
         result
     }
@@ -1977,8 +1980,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// v1.plus_eq(&v2);
     /// assert_eq!(v1.to_string(), "1111111111");
     /// assert_eq!(v2.to_string(), "0101010101");
@@ -1996,15 +1999,15 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// let v3 = v1.plus(&v2);
     /// assert_eq!(v1.to_string(), "1010101010");
     /// assert_eq!(v2.to_string(), "0101010101");
     /// assert_eq!(v3.to_string(), "1111111111");
     /// ```
-    fn plus<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn plus<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.xor_eq(rhs);
         result
     }
@@ -2020,8 +2023,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// v1.minus_eq(&v2);
     /// assert_eq!(v1.to_string(), "1111111111");
     /// assert_eq!(v2.to_string(), "0101010101");
@@ -2039,15 +2042,15 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-    /// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+    /// let v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+    /// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
     /// let v3 = v1.minus(&v2);
     /// assert_eq!(v1.to_string(), "1010101010");
     /// assert_eq!(v2.to_string(), "0101010101");
     /// assert_eq!(v3.to_string(), "1111111111");
     /// ```
-    fn minus<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVec<Word> {
-        let mut result: BitVec<Word> = BitVec::from_store(self);
+    fn minus<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVector<Word> {
+        let mut result: BitVector<Word> = BitVector::from_store(self);
         result.xor_eq(rhs);
         result
     }

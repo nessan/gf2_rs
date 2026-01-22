@@ -1,17 +1,17 @@
-# The `BitVec` Type
+# The `BitVector` Type
 
 ## Introduction
 
-A [`BitVec`] is a dynamically sized vector of bit elements stored compactly in a [`Vec`] of unsigned integer words.
+A [`BitVector`] is a dynamically sized vector of bit elements stored compactly in a [`Vec`] of unsigned integer words.
 The default word type is `usize`.
 
 The type implements the [`BitStore`] trait, which provides a rich API for manipulating the bits in the vector.
-In addition to the many methods defined by the [`BitStore`] trait, the `BitVec` type provides ways to construct bit-vectors from various sources, methods to resize bit-vectors, and methods to append or remove elements from the end of bit-vectors.
+In addition to the many methods defined by the [`BitStore`] trait, the `BitVector` type provides ways to construct bit-vectors from various sources, methods to resize bit-vectors, and methods to append or remove elements from the end of bit-vectors.
 
 <div style="border: 2px solid #ccc; border-radius: 8px; padding: 16px; margin: 16px 0; display: flex; align-items: center;">
 <div style="font-size: 48px; margin-right: 12px; color: #666;">📝</div>
 
-A `BitVec` packs its elements into an [`Vec`] of some unsigned integer type defined by the generic parameter of type [`Unsigned`].
+A `BitVector` packs its elements into an [`Vec`] of some unsigned integer type defined by the generic parameter of type [`Unsigned`].
 The default `Word` is a `usize` which, on modern computer systems, will often be a 64-bit unsigned integer.
 Operations on and between bit-vectors and other objects in the `gf2` crate are implemented using bitwise operations on whole underlying words at a time.
 These are highly optimised in modern CPUs, allowing for fast computation even on large bit-vectors.
@@ -22,7 +22,7 @@ It also means we never have to worry about overflows or carries as we would with
 In mathematical terms, a bit-vector is a vector over [GF(2)], the simplest [Galois-Field] with just two elements, usually denoted 0 & 1, as the booleans true & false, or as the bits set & unset.
 Arithmetic over GF(2) is mod 2, so addition/subtraction becomes the `XOR` operation while multiplication/division becomes `AND`.
 
-It is worth noting that by default, a `BitVec` prints in _vector-order_.
+It is worth noting that by default, a `BitVector` prints in _vector-order_.
 For example, a bit-vector of size four will print as `v0v1v2v3` with the elements in increasing index-order with the "least significant" vector element, `v0`, coming **first** on the _left_.
 This contrasts to the many bit-array types, which usually print in _bit-order_.
 The equivalent object in those libraries with say four elements prints as `b3b2b1b0` with the least significant bit `b0` printed **last** on the _right_.
@@ -37,7 +37,7 @@ It is too confusing to print a matrix in any order other than the one where the 
 
 ## Methods Overview
 
-The `BitVec` type provides a rich set of methods for constructing and resizing bit-vectors:
+The `BitVector` type provides a rich set of methods for constructing and resizing bit-vectors:
 
 | Category                                                | Description                                                               |
 | ------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -77,56 +77,56 @@ These methods fall into categories:
 
 To implement the [`BitStore`] trait, the type defines the following seven methods:
 
-| Method                | Description                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| [`BitVec::len`]       | Returns the number of bits in the bit-vector.                                         |
-| [`BitVec::store`]     | Provides read-only access to the first _word_ holding bits in the bit-vector.         |
-| [`BitVec::store_mut`] | Provides read-write access to the first _word_ holding bits in the bit-vector.        |
-| [`BitVec::offset`]    | Returns the offset in bits from start of `word(0)` to the bit-vector's first element. |
-| [`BitVec::words`]     | This is always `Word::words_needed(self.len())` but cached for efficiency.            |
-| [`BitVec::word`]      | Returns a "word" from the bit-vector.                                                 |
-| [`BitVec::set_word`]  | Sets the value of a "word" in the bit-vector to a passed value.                       |
+| Method                   | Description                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| [`BitVector::len`]       | Returns the number of bits in the bit-vector.                                         |
+| [`BitVector::store`]     | Provides read-only access to the first _word_ holding bits in the bit-vector.         |
+| [`BitVector::store_mut`] | Provides read-write access to the first _word_ holding bits in the bit-vector.        |
+| [`BitVector::offset`]    | Returns the offset in bits from start of `word(0)` to the bit-vector's first element. |
+| [`BitVector::words`]     | This is always `Word::words_needed(self.len())` but cached for efficiency.            |
+| [`BitVector::word`]      | Returns a "word" from the bit-vector.                                                 |
+| [`BitVector::set_word`]  | Sets the value of a "word" in the bit-vector to a passed value.                       |
 
 These methods are trivial to implement for bit-vectors.
 
-The one place where care is needed is in the [`BitVec::set_word`] method, which must ensure that any bits beyond the size of the bit-vector remain set to zero.
+The one place where care is needed is in the [`BitVector::set_word`] method, which must ensure that any bits beyond the size of the bit-vector remain set to zero.
 
 ## Constructors
 
-The `BitVec` type provides several constructors to create bit-vectors with specific properties and fills:
+The `BitVector` type provides several constructors to create bit-vectors with specific properties and fills:
 
-| Method Name                      | Description                                                                                     |
-| -------------------------------- | ----------------------------------------------------------------------------------------------- |
-| [`BitVec::new`]                  | Returns a zero-sized bit-vector.                                                                |
-| [`BitVec::with_capacity`]        | Returns a zero-sized bit-vector that can add some elements without any extra allocations.       |
-| [`BitVec::zeros`]                | Returns a bit-vector where all the elements are 0.                                              |
-| [`BitVec::ones`]                 | Returns a bit-vector where all the elements are 1.                                              |
-| [`BitVec::constant`]             | Returns a bit-vector where all the elements are whatever is passed as a `value`.                |
-| [`BitVec::unit`]                 | Returns a bit-vector where all the elements are zero except for a single 1.                     |
-| [`BitVec::alternating`]          | Returns a bit-vector where all the elements follow the pattern `101010...`                      |
-| [`BitVec::from_unsigned`]        | Returns a bit-vector filled with bits from any [`Unsigned`] value.                              |
-| [`BitVec::from_store`]           | Returns a bit-vector filled with bits from any bit-store.                                       |
-| [`BitVec::from_fn`]              | Returns a bit-vector filled with bits set by calling a function for each index.                 |
-| [`BitVec::random`]               | Returns a bit-vector filled by flipping a fair coin seeded from entropy.                        |
-| [`BitVec::random_seeded`]        | Returns a bit-vector with a reproducible fair random fill.                                      |
-| [`BitVec::random_biased` ]       | Returns a random bit-vector where you set the probability of bits being 1.                      |
-| [`BitVec::random_biased_seeded`] | Returns a random bit-vector where you set the probability of bits being 1 _and_ the RNG's seed. |
+| Method Name                         | Description                                                                                     |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| [`BitVector::new`]                  | Returns a zero-sized bit-vector.                                                                |
+| [`BitVector::with_capacity`]        | Returns a zero-sized bit-vector that can add some elements without any extra allocations.       |
+| [`BitVector::zeros`]                | Returns a bit-vector where all the elements are 0.                                              |
+| [`BitVector::ones`]                 | Returns a bit-vector where all the elements are 1.                                              |
+| [`BitVector::constant`]             | Returns a bit-vector where all the elements are whatever is passed as a `value`.                |
+| [`BitVector::unit`]                 | Returns a bit-vector where all the elements are zero except for a single 1.                     |
+| [`BitVector::alternating`]          | Returns a bit-vector where all the elements follow the pattern `101010...`                      |
+| [`BitVector::from_unsigned`]        | Returns a bit-vector filled with bits from any [`Unsigned`] value.                              |
+| [`BitVector::from_store`]           | Returns a bit-vector filled with bits from any bit-store.                                       |
+| [`BitVector::from_fn`]              | Returns a bit-vector filled with bits set by calling a function for each index.                 |
+| [`BitVector::random`]               | Returns a bit-vector filled by flipping a fair coin seeded from entropy.                        |
+| [`BitVector::random_seeded`]        | Returns a bit-vector with a reproducible fair random fill.                                      |
+| [`BitVector::random_biased` ]       | Returns a random bit-vector where you set the probability of bits being 1.                      |
+| [`BitVector::random_biased_seeded`] | Returns a random bit-vector where you set the probability of bits being 1 _and_ the RNG's seed. |
 
 ### Notes
 
-- We have implemented the [`Default`] trait for `BitVec` to return a zero-sized bit-vector.
-- The [`BitVec::from_store`] constructor is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying `Unsigned` word type for their storage -- i.e., the `Word` type for `self` may differ from the `SrcWord` type for the `src` bit-store.
-- We have implemented the [`From`] trait for [`BitVec`] from any bit-store type by forwarding to [`BitVec::from_store`] method.
+- We have implemented the [`Default`] trait for `BitVector` to return a zero-sized bit-vector.
+- The [`BitVector::from_store`] constructor is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying `Unsigned` word type for their storage -- i.e., the `Word` type for `self` may differ from the `SrcWord` type for the `src` bit-store.
+- We have implemented the [`From`] trait for [`BitVector`] from any bit-store type by forwarding to [`BitVector::from_store`] method.
 
 ## Construction from Strings
 
-We can construct a `BitVec` from strings --- these methods can fail, so they return an `Option<BitVec>` and `None` on failure.
+We can construct a `BitVector` from strings --- these methods can fail, so they return an `Option<BitVector>` and `None` on failure.
 
-| Method Name                    | Description                                                  |
-| ------------------------------ | ------------------------------------------------------------ |
-| [`BitVec::from_string`]        | Tries to construct a bit-vector from an arbitrary string.    |
-| [`BitVec::from_binary_string`] | Tries to construct a bit-vector from a _binary_ string.      |
-| [`BitVec::from_hex_string`]    | Tries to construct a bit-vector from a _hexadecimal_ string. |
+| Method Name                       | Description                                                  |
+| --------------------------------- | ------------------------------------------------------------ |
+| [`BitVector::from_string`]        | Tries to construct a bit-vector from an arbitrary string.    |
+| [`BitVector::from_binary_string`] | Tries to construct a bit-vector from a _binary_ string.      |
+| [`BitVector::from_hex_string`]    | Tries to construct a bit-vector from a _hexadecimal_ string. |
 
 Space, comma, single quote, and underscore characters are removed from the string.
 
@@ -147,48 +147,48 @@ See the [string-encodings](BitStore#stringification) documentation for more deta
 
 We have methods to query and manipulate the size and capacity of a bit-vector:
 
-| Method Name                    | Description                                                                                      |
-| ------------------------------ | ------------------------------------------------------------------------------------------------ |
-| [`BitVec::len`]                | Returns the number of bit elements in the bit-vector.                                            |
-| [`BitVec::capacity`]           | Returns the total number of bits the vector can hold without allocating more memory.             |
-| [`BitVec::remaining_capacity`] | Returns the number of _additional_ elements we can store in the bit-vector without reallocating. |
-| [`BitVec::shrink_to_fit`]      | Tries to shrink the vector's capacity as much as possible.                                       |
-| [`BitVec::clear`]              | Sets the `len()` to zero. Leaves the capacity unaltered.                                         |
-| [`BitVec::resize`]             | Resizes the bit-vector, either adding zeros, or truncating existing elements.                    |
+| Method Name                       | Description                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [`BitVector::len`]                | Returns the number of bit elements in the bit-vector.                                            |
+| [`BitVector::capacity`]           | Returns the total number of bits the vector can hold without allocating more memory.             |
+| [`BitVector::remaining_capacity`] | Returns the number of _additional_ elements we can store in the bit-vector without reallocating. |
+| [`BitVector::shrink_to_fit`]      | Tries to shrink the vector's capacity as much as possible.                                       |
+| [`BitVector::clear`]              | Sets the `len()` to zero. Leaves the capacity unaltered.                                         |
+| [`BitVector::resize`]             | Resizes the bit-vector, either adding zeros, or truncating existing elements.                    |
 
 ## Appending Elements
 
 We have methods to append elements from various sources to the end of a bit-vector:
 
-| Method Name                  | Description                                                                    |
-| ---------------------------- | ------------------------------------------------------------------------------ |
-| [`BitVec::push`]             | Pushes a single bit (0 or 1) onto the end of the bit-vector.                   |
-| [`BitVec::append_unsigned`]  | Appends the bits from any unsigned integer value to the end of the bit-vector. |
-| [`BitVec::append_store`]     | Appends bits from another bit-store to the end of the bit-vector.              |
-| [`BitVec::append_digit`]     | Appends a "character's" worth of bits to the end of the bit-vector.            |
-| [`BitVec::append_hex_digit`] | Appends four bits from a "hex-character" to the end of the bit-vector.         |
+| Method Name                     | Description                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| [`BitVector::push`]             | Pushes a single bit (0 or 1) onto the end of the bit-vector.                   |
+| [`BitVector::append_unsigned`]  | Appends the bits from any unsigned integer value to the end of the bit-vector. |
+| [`BitVector::append_store`]     | Appends bits from another bit-store to the end of the bit-vector.              |
+| [`BitVector::append_digit`]     | Appends a "character's" worth of bits to the end of the bit-vector.            |
+| [`BitVector::append_hex_digit`] | Appends four bits from a "hex-character" to the end of the bit-vector.         |
 
-The [`BitVec::append_store`] is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying `Unsigned` word type for their storage -- i.e., the `Word` type for `self` may differ from the `SrcWord` type for the `src` bit-store.
+The [`BitVector::append_store`] is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying `Unsigned` word type for their storage -- i.e., the `Word` type for `self` may differ from the `SrcWord` type for the `src` bit-store.
 
-The [`BitVec::append_digit`] method appends bits from a character representing a digit in one of the bases 2, 4, 8, or 16.
+The [`BitVector::append_digit`] method appends bits from a character representing a digit in one of the bases 2, 4, 8, or 16.
 It does nothing if it fails to parse the character.
 
 ## Removing Elements
 
 We have methods to remove elements from the end of a bit-vector:
 
-| Method Name                    | Description                                                                                      |
-| ------------------------------ | ------------------------------------------------------------------------------------------------ |
-| [`BitVec::pop`]                | Removes the last element off the end of the bit-vector and returns it.                           |
-| [`BitVec::split_off_word`]     | Removes a single `Word` off the end of the bit-vector and returns it.                            |
-| [`BitVec::split_off_unsigned`] | Removes a single arbitrary-sized unsigned integer off the end of the bit-vector and returns it.  |
-| [`BitVec::split_off_into`]     | Splits a bit-vector into two at a given index and fills a passed vector with the second "half".  |
-| [`BitVec::split_off`]          | Splits a bit-vector into two at a given index and returns the second "half" as a new bit-vector. |
+| Method Name                       | Description                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [`BitVector::pop`]                | Removes the last element off the end of the bit-vector and returns it.                           |
+| [`BitVector::split_off_word`]     | Removes a single `Word` off the end of the bit-vector and returns it.                            |
+| [`BitVector::split_off_unsigned`] | Removes a single arbitrary-sized unsigned integer off the end of the bit-vector and returns it.  |
+| [`BitVector::split_off_into`]     | Splits a bit-vector into two at a given index and fills a passed vector with the second "half".  |
+| [`BitVector::split_off`]          | Splits a bit-vector into two at a given index and returns the second "half" as a new bit-vector. |
 
 The first three methods return the removed elements as an [`Option`], and as a [`None`] if the vector is empty.
 
-The two [`BitVec::split_off_into`] and [`BitVec::split_off`] methods complement the [`BitStore::split_at_into`] and [`BitStore::split_at`] methods.
-The two `BitVec` only versions change the size of the bit-vector _in place_.
+The two [`BitVector::split_off_into`] and [`BitVector::split_off`] methods complement the [`BitStore::split_at_into`] and [`BitStore::split_at`] methods.
+The two `BitVector` only versions change the size of the bit-vector _in place_.
 
 ## Bit Access (Inherited)
 
@@ -256,7 +256,7 @@ The following methods create or fill _independent_ bit-vectors with copies of so
 
 | Method                      | Description                                                                              |
 | --------------------------- | ---------------------------------------------------------------------------------------- |
-| [`BitStore::sub`]           | Returns a new [`BitVec`] encompassing the bits in a half-open range.                     |
+| [`BitStore::sub`]           | Returns a new [`BitVector`] encompassing the bits in a half-open range.                  |
 | [`BitStore::split_at_into`] | Fills two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`.           |
 | [`BitStore::split_at`]      | Returns two new two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`. |
 
@@ -364,7 +364,7 @@ We have implemented several foreign traits from the standard library for bit-vec
 
 | Trait Name              | Description                                  |
 | ----------------------- | -------------------------------------------- |
-| [`Default`]             | Forwarded to [`BitVec::new`].                |
+| [`Default`]             | Forwarded to [`BitVector::new`].             |
 | [`std::ops::Index`]     | Forwarded to [`BitStore::get`].              |
 | [`std::ops::Not`]       | Forwarded to [`BitStore::flipped`].          |
 | [`std::fmt::Display`]   | Forwarded to [`BitStore::to_binary_string`]. |

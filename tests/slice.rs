@@ -2,7 +2,7 @@ use gf2::*;
 
 // The type of bit-vector/slice we are testing.
 type Word = u8;
-type BV = BitVec<Word>;
+type BV = BitVector<Word>;
 type BS<'a> = BitSlice<'a, Word>;
 
 /// Tests that don't mutate the underlying words.

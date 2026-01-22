@@ -15,7 +15,7 @@ use utilities_rs::{
 
 fn main() {
     type Word = usize;
-    type Mat = BitMat<Word>;
+    type Mat = BitMatrix<Word>;
 
     // Number of trials & ticks.
     let n_trials: usize = 1_000;

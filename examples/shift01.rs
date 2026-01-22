@@ -1,4 +1,4 @@
-/// Compare the naive `shift_left` and `shift_right` implementations to the ones we implemented for `BitVec`
+/// Compare the naive `shift_left` and `shift_right` implementations to the ones we implemented for `BitVector`
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
 /// SPDX-License-Identifier: MIT
@@ -9,7 +9,7 @@ use rand::prelude::*;
 use std::io::Write;
 
 fn main() {
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
 
     // Number of trials to run & how often to print progress.
     let n_trials = 1_000;

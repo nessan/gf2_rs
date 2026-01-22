@@ -1,9 +1,9 @@
-//! [`BitPoly`] is a polynomial over GF(2) --- a _bit-polynomial_.
+//! [`BitPolynomial`] is a polynomial over GF(2) --- a _bit-polynomial_.
 
 use crate::{
-    BitMat,
+    BitMatrix,
     BitStore,
-    BitVec,
+    BitVector,
     Unsigned,
 };
 
@@ -25,14 +25,14 @@ use std::{
 
 #[doc = include_str!("../docs/poly.md")]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
-pub struct BitPoly<Word: Unsigned = usize> {
+pub struct BitPolynomial<Word: Unsigned = usize> {
     // The coefficient of `x^i` is stored in the `i`-th position of the vector.
     // The polynomial may not be monic, i.e., it may have high-order, trailing zero coefficients.
-    coeffs: BitVec<Word>,
+    coeffs: BitVector<Word>,
 }
 
 /// Constructors.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// Returns an empty bit-polynomial with *no* coefficients.
     ///
     /// # Note
@@ -41,48 +41,48 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::new();
+    /// let p: BitPolynomial = BitPolynomial::new();
     /// assert_eq!(p.to_string(), "0");
     /// ```
     #[must_use]
     #[inline]
-    pub fn new() -> Self { Self { coeffs: BitVec::new() } }
+    pub fn new() -> Self { Self { coeffs: BitVector::new() } }
 
     /// Returns the zero bit-polynomial p(x) := 0.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::zero();
+    /// let p: BitPolynomial = BitPolynomial::zero();
     /// assert_eq!(p.to_string(), "0");
     /// ```
     #[must_use]
     #[inline]
-    pub fn zero() -> Self { Self { coeffs: BitVec::new() } }
+    pub fn zero() -> Self { Self { coeffs: BitVector::new() } }
 
     /// Returns the bit-polynomial p(x) := 1.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::one();
+    /// let p: BitPolynomial = BitPolynomial::one();
     /// assert_eq!(p.to_string(), "1");
     /// ```
     #[must_use]
     #[inline]
-    pub fn one() -> Self { Self { coeffs: BitVec::ones(1) } }
+    pub fn one() -> Self { Self { coeffs: BitVector::ones(1) } }
 
     /// Returns the constant bit-polynomial p(x) := val where val is a boolean.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::constant(true);
+    /// let p: BitPolynomial = BitPolynomial::constant(true);
     /// assert_eq!(p.to_string(), "1");
     /// ```
     #[must_use]
     #[inline]
-    pub fn constant(val: bool) -> Self { Self { coeffs: BitVec::constant(val, 1) } }
+    pub fn constant(val: bool) -> Self { Self { coeffs: BitVector::constant(val, 1) } }
 
     /// Returns a bit-polynomial with `n + 1` coefficients, all initialized to zero.
     ///
@@ -91,12 +91,12 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::zeros(3);
+    /// let p: BitPolynomial = BitPolynomial::zeros(3);
     /// assert_eq!(p.to_string(), "0");
     /// ```
     #[must_use]
     #[inline]
-    pub fn zeros(n: usize) -> Self { Self { coeffs: BitVec::zeros(n + 1) } }
+    pub fn zeros(n: usize) -> Self { Self { coeffs: BitVector::zeros(n + 1) } }
 
     /// Returns a monic bit-polynomial of degree `n`, with `n + 1` coefficients, all initialized to one.
     ///
@@ -105,25 +105,25 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::ones(4);
+    /// let p: BitPolynomial = BitPolynomial::ones(4);
     /// assert_eq!(p.to_string(), "1 + x + x^2 + x^3 + x^4");
     /// ```
     #[must_use]
     #[inline]
-    pub fn ones(n: usize) -> Self { Self { coeffs: BitVec::ones(n + 1) } }
+    pub fn ones(n: usize) -> Self { Self { coeffs: BitVector::ones(n + 1) } }
 
     /// Returns the bit-polynomial p(x) := x^n.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.to_string(), "x^3");
     /// ```
     #[must_use]
     #[inline]
     pub fn x_to_the(n: usize) -> Self {
-        let mut coeffs = BitVec::zeros(n + 1);
+        let mut coeffs = BitVector::zeros(n + 1);
         coeffs.set(n, true);
         Self { coeffs }
     }
@@ -133,37 +133,37 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101011").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101011").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.to_string(), "1 + x^2 + x^4 + x^5");
     /// ```
     #[must_use]
     #[inline]
-    pub fn from_coefficients(coeffs: BitVec<Word>) -> Self { Self { coeffs } }
+    pub fn from_coefficients(coeffs: BitVector<Word>) -> Self { Self { coeffs } }
 
     /// Returns a new bit-polynomial of *degree* `n` with coefficients set by calling the function `f` for each index.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::from_fn(10, |i| i % 2 == 0);
+    /// let p: BitPolynomial = BitPolynomial::from_fn(10, |i| i % 2 == 0);
     /// assert_eq!(p.to_string(), "1 + x^2 + x^4 + x^6 + x^8 + x^10");
     /// ```
     #[must_use]
     #[inline]
-    pub fn from_fn(n: usize, f: impl Fn(usize) -> bool) -> Self { Self { coeffs: BitVec::from_fn(n + 1, f) } }
+    pub fn from_fn(n: usize, f: impl Fn(usize) -> bool) -> Self { Self { coeffs: BitVector::from_fn(n + 1, f) } }
 }
 
 /// Construct bit-polynomials with random coefficients.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// Returns a new bit-polynomial of *degree* `n` with `n + 1` coefficients picked uniformly at random.
     ///
     /// # Note
     /// If `n > 0` then the returned polynomial is monic.
     #[must_use]
     pub fn random(n: usize) -> Self {
-        // BitPoly of degree `n` has `n + 1` coefficients.
-        let mut coeffs = BitVec::random(n + 1);
+        // BitPolynomial of degree `n` has `n + 1` coefficients.
+        let mut coeffs = BitVector::random(n + 1);
 
         // If `n > 0` we want the coefficient of `x^n` to be one for sure. If `n == 0` then a random 0/1 is fine.
         if n > 0 {
@@ -180,14 +180,14 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// ```
     /// use gf2::*;
     /// let seed: u64 = 42;
-    /// let p1: BitPoly = BitPoly::random_seeded(3311, seed);
-    /// let p2: BitPoly = BitPoly::random_seeded(3311, seed);
+    /// let p1: BitPolynomial = BitPolynomial::random_seeded(3311, seed);
+    /// let p2: BitPolynomial = BitPolynomial::random_seeded(3311, seed);
     /// assert_eq!(p1, p2, "Polynomials with the same seed should be equal");
     /// ```
     #[must_use]
     pub fn random_seeded(n: usize, seed: u64) -> Self {
-        // BitPoly of degree `n` has `n + 1` coefficients.
-        let mut coeffs = BitVec::random_seeded(n + 1, seed);
+        // BitPolynomial of degree `n` has `n + 1` coefficients.
+        let mut coeffs = BitVector::random_seeded(n + 1, seed);
 
         // If `n > 0` we want the coefficient of `x^n` to be one for sure. If `n == 0` then a random 0/1 is fine.
         if n > 0 {
@@ -198,14 +198,14 @@ impl<Word: Unsigned> BitPoly<Word> {
 }
 
 /// Core queries for a bit-polynomial.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// Returns the degree of the bit-polynomial.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.degree(), 4);
     /// ```
     #[must_use]
@@ -251,24 +251,24 @@ impl<Word: Unsigned> BitPoly<Word> {
 }
 
 /// Coefficient read and write methods for bit=polynomials.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// Returns a reference to the coefficients of the bit-polynomial as a read-only borrowed bit-vector.
     ///
     /// # Note
     /// You can use this method to get a reference to the polynomial's coefficients as a bit-vector.
-    /// Then all the many read-only methods of the [`BitVec`] type are available.
+    /// Then all the many read-only methods of the [`BitVector`] type are available.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.coefficients().count_ones(), 3);
     /// assert_eq!(p.coefficients().last_set(), Some(4));
     /// ```
     #[must_use]
     #[inline]
-    pub fn coefficients(&self) -> &BitVec<Word> { &self.coeffs }
+    pub fn coefficients(&self) -> &BitVector<Word> { &self.coeffs }
 
     /// Returns the coefficient of `x^i` for `i`.
     ///
@@ -281,8 +281,8 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.coeff(0), true);
     /// assert_eq!(p[1], false);
     /// ```
@@ -298,7 +298,7 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut p: BitPoly = BitPoly::x_to_the(3);
+    /// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.to_string(), "x^3");
     /// p.set_coeff(2, true);
     /// assert_eq!(p.to_string(), "x^2 + x^3");
@@ -316,7 +316,7 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut p: BitPoly = BitPoly::x_to_the(3);
+    /// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.to_string(), "x^3");
     /// p.clear();
     /// assert_eq!(p.to_string(), "0");
@@ -336,8 +336,8 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("111010").unwrap();
-    /// let mut p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("111010").unwrap();
+    /// let mut p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.to_string(), "1 + x + x^2 + x^4");
     /// p.resize(2);
     /// assert_eq!(p.to_string(), "1 + x");
@@ -366,8 +366,8 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-    /// let mut p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let mut p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.is_monic(), false);
     /// p.make_monic();
     /// assert_eq!(p.is_monic(), true);
@@ -381,20 +381,20 @@ impl<Word: Unsigned> BitPoly<Word> {
 }
 
 /// Arithmetic methods for bit-polynomials.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// Adds another  bit-polynomial to `self` in-place.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut p: BitPoly = BitPoly::x_to_the(3);
-    /// let q: BitPoly = BitPoly::x_to_the(2);
+    /// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
+    /// let q: BitPolynomial = BitPolynomial::x_to_the(2);
     /// assert_eq!(p.to_string(), "x^3");
     /// p.plus_eq(&q);
     /// assert_eq!(q.to_string(), "x^2");
     /// assert_eq!(p.to_string(), "x^2 + x^3");
     /// ```
-    pub fn plus_eq(&mut self, rhs: &BitPoly<Word>) {
+    pub fn plus_eq(&mut self, rhs: &BitPolynomial<Word>) {
         // Edge case: `rhs` is the zero polynomial.
         if rhs.is_zero() {
             return;
@@ -427,13 +427,13 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
-    /// let q: BitPoly = BitPoly::x_to_the(2);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
+    /// let q: BitPolynomial = BitPolynomial::x_to_the(2);
     /// let r = p.plus(&q);
     /// assert_eq!(r.to_string(), "x^2 + x^3");
     /// ```
     #[must_use]
-    pub fn plus(&self, rhs: &BitPoly<Word>) -> BitPoly<Word> {
+    pub fn plus(&self, rhs: &BitPolynomial<Word>) -> BitPolynomial<Word> {
         let mut result = self.clone();
         result.plus_eq(rhs);
         result
@@ -447,14 +447,14 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut p: BitPoly = BitPoly::x_to_the(3);
-    /// let q: BitPoly = BitPoly::x_to_the(2);
+    /// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
+    /// let q: BitPolynomial = BitPolynomial::x_to_the(2);
     /// assert_eq!(p.to_string(), "x^3");
     /// p.minus_eq(&q);
     /// assert_eq!(q.to_string(), "x^2");
     /// assert_eq!(p.to_string(), "x^2 + x^3");
     /// ```
-    pub fn minus_eq(&mut self, rhs: &BitPoly<Word>) { self.plus_eq(rhs) }
+    pub fn minus_eq(&mut self, rhs: &BitPolynomial<Word>) { self.plus_eq(rhs) }
 
     /// Returns a new bit-polynomial that is this bit-polynomial minus another.
     ///
@@ -464,13 +464,13 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
-    /// let q: BitPoly = BitPoly::x_to_the(2);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
+    /// let q: BitPolynomial = BitPolynomial::x_to_the(2);
     /// let r = p.minus(&q);
     /// assert_eq!(r.to_string(), "x^2 + x^3");
     /// ```
     #[must_use]
-    pub fn minus(&self, rhs: &BitPoly<Word>) -> BitPoly<Word> {
+    pub fn minus(&self, rhs: &BitPolynomial<Word>) -> BitPolynomial<Word> {
         let mut result = self.clone();
         result.plus_eq(rhs);
         result
@@ -481,14 +481,14 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("111").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("111").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.to_string(), "1 + x + x^2");
-    /// let mut q: BitPoly = BitPoly::new();
+    /// let mut q: BitPolynomial = BitPolynomial::new();
     /// p.square_into(&mut q);
     /// assert_eq!(q.to_string(), "1 + x^2 + x^4");
     /// ```
-    pub fn square_into(&self, dst: &mut BitPoly<Word>) {
+    pub fn square_into(&self, dst: &mut BitPolynomial<Word>) {
         // Edge case: any constant polynomial.
         if self.is_constant() {
             *dst = self.clone();
@@ -505,15 +505,15 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.to_string(), "x^3");
-    /// let q: BitPoly = p.squared();
+    /// let q: BitPolynomial = p.squared();
     /// assert_eq!(q.to_string(), "x^6");
     /// ```
     #[inline]
     #[must_use]
     pub fn squared(&self) -> Self {
-        let mut dst = BitPoly::new();
+        let mut dst = BitPolynomial::new();
         self.square_into(&mut dst);
         dst
     }
@@ -526,7 +526,7 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut p: BitPoly = BitPoly::x_to_the(3);
+    /// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.to_string(), "x^3");
     /// p.times_x_to_the(2);
     /// assert_eq!(p.to_string(), "x^5");
@@ -549,18 +549,18 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
-    /// let q: BitPoly = BitPoly::x_to_the(2);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
+    /// let q: BitPolynomial = BitPolynomial::x_to_the(2);
     /// let r = p.convolved_with(&q);
     /// assert_eq!(p.to_string(), "x^3");
     /// assert_eq!(q.to_string(), "x^2");
     /// assert_eq!(r.to_string(), "x^5");
     /// ```
     #[must_use]
-    pub fn convolved_with(&self, rhs: &BitPoly<Word>) -> Self {
+    pub fn convolved_with(&self, rhs: &BitPolynomial<Word>) -> Self {
         // Edge case: either polynomial is the zero polynomial.
         if self.is_zero() || rhs.is_zero() {
-            return BitPoly::zero();
+            return BitPolynomial::zero();
         }
 
         // Edge case: either polynomial is the constant polynomial p(x) := 1.
@@ -577,18 +577,18 @@ impl<Word: Unsigned> BitPoly<Word> {
 }
 
 /// Bit-polynomial evaluation.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// Evaluates the polynomial for a scalar `bool` argument.
     ///
     /// # Note
     /// - Ideally this should be implemented via the `Fn` trait but the necessary machinery is not yet available in
     ///   stable Rust. If unstable features are enabled then we have a `Fn` implementation that forwards to this method.
-    /// - The `BitMat` module has a `eval_matrix` method to compute `p(M)` where `M` is a bit-matrix.
+    /// - The `BitMatrix` module has a `eval_matrix` method to compute `p(M)` where `M` is a bit-matrix.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.eval_bool(true), true);
     /// assert_eq!(p.eval_bool(false), false);
     /// ```
@@ -614,7 +614,7 @@ impl<Word: Unsigned> BitPoly<Word> {
         sum.count_ones() % 2 == 1
     }
 
-    /// Evaluates the bit-polynomial for a square [`BitMat`] argument.
+    /// Evaluates the bit-polynomial for a square [`BitMatrix`] argument.
     ///
     /// Uses Horner's method to evaluate `p(M)` where `M` is a square matrix and returns the result as a bit-matrix.
     ///
@@ -624,24 +624,24 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::from_coefficients(BitVec::alternating(12));
-    /// let m: BitMat = BitMat::identity(6);
-    /// assert_eq!(p.eval_matrix(&m), BitMat::zeros(6, 6));
-    /// let p = BitPoly::from_coefficients(!BitVec::alternating(6));
-    /// assert_eq!(p.eval_matrix(&m), BitMat::identity(6));
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(BitVector::alternating(12));
+    /// let m: BitMatrix = BitMatrix::identity(6);
+    /// assert_eq!(p.eval_matrix(&m), BitMatrix::zeros(6, 6));
+    /// let p = BitPolynomial::from_coefficients(!BitVector::alternating(6));
+    /// assert_eq!(p.eval_matrix(&m), BitMatrix::identity(6));
     /// ```
     #[must_use]
-    pub fn eval_matrix(&self, mat: &BitMat<Word>) -> BitMat<Word> {
+    pub fn eval_matrix(&self, mat: &BitMatrix<Word>) -> BitMatrix<Word> {
         // Error case: the matrix is not square.
-        assert!(mat.is_square(), "BitMat must be square not {}x{}", mat.rows(), mat.cols());
+        assert!(mat.is_square(), "BitMatrix must be square not {}x{}", mat.rows(), mat.cols());
 
         // Edge case: the zero polynomial.
         if self.is_zero() {
-            return BitMat::zeros(mat.rows(), mat.cols());
+            return BitMatrix::zeros(mat.rows(), mat.cols());
         }
 
         // Otherwise we start with the identity matrix.
-        let mut result = BitMat::identity(mat.rows());
+        let mut result = BitMatrix::identity(mat.rows());
 
         // Work backwards a la Horner's method from the highest non-zero power in the polynomial.
         let mut d = self.degree();
@@ -661,7 +661,7 @@ impl<Word: Unsigned> BitPoly<Word> {
 }
 
 /// String representation methods.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// Returns a readable "full" string for the bit-polynomial in terms of the default "variable" name `x`.
     ///
     /// # Note
@@ -670,8 +670,8 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Example
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.to_full_string(), "1 + 0x + x^2 + 0x^3 + x^4 + 0x^5");
     /// ```
     #[must_use]
@@ -685,8 +685,8 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Example
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.to_string_with_var("M"), "1 + M^2 + M^4");
     /// ```
     #[must_use]
@@ -736,8 +736,8 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-    /// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
     /// assert_eq!(p.to_full_string_with_var("M"), "1 + 0M + M^2 + 0M^3 + M^4 + 0M^5");
     /// ```
     #[must_use]
@@ -775,7 +775,7 @@ impl<Word: Unsigned> BitPoly<Word> {
 }
 
 /// Reduction methods to compute x^exponent mod P(x) where P is a bit-polynomial and exponent might be huge.
-impl<Word: Unsigned> BitPoly<Word> {
+impl<Word: Unsigned> BitPolynomial<Word> {
     /// If `self` is P(x) then this returns the polynomial r(x) := x^n mod P(x).
     ///
     /// # Note
@@ -789,7 +789,7 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.reduce_x_to_the(2).to_string(), "x^2");
     /// ```
     #[must_use]
@@ -808,7 +808,7 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(6);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(6);
     /// assert_eq!(p.reduce_x_to_the_2_to_the(2).to_string(), "x^4");
     /// ```
     #[must_use]
@@ -832,7 +832,7 @@ impl<Word: Unsigned> BitPoly<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let p: BitPoly = BitPoly::x_to_the(3);
+    /// let p: BitPolynomial = BitPolynomial::x_to_the(3);
     /// assert_eq!(p.reduce_x_to_power(2, false).to_string(), "x^2");
     /// ```
     #[allow(clippy::many_single_char_names)]
@@ -861,11 +861,11 @@ impl<Word: Unsigned> BitPoly<Word> {
         }
 
         // We can write p(x) = p_0 + p_1 x + ... + p_{d-1} x^{d-1}. All that matters are those coefficients.
-        let p: BitVec<Word> = self.coeffs.slice(0..d).into();
+        let p: BitVector<Word> = self.coeffs.slice(0..d).into();
 
         // Closure that computes q(x) -> x * q(x) mod P(x) where degree[q] < d.
         // The closure works on the coefficients of q(x) passed as the bit-vector `q`.
-        let times_x_step = |q: &mut BitVec<Word>| {
+        let times_x_step = |q: &mut BitVector<Word>| {
             let add_p = q[d - 1];
             *q >>= 1;
             if add_p {
@@ -875,7 +875,7 @@ impl<Word: Unsigned> BitPoly<Word> {
 
         // Iteratively precompute x^{d+i} mod P(x) for i = 0, 1, ..., d-1 starting with x^d mod P(x) ~ p.
         // We store all the bit-vectors in a standard `Vec` of length d.
-        let mut power_mod = Vec::<BitVec<Word>>::with_capacity(d);
+        let mut power_mod = Vec::<BitVector<Word>>::with_capacity(d);
         power_mod.push(p.clone());
         for i in 1..d {
             let mut q = power_mod[i - 1].clone();
@@ -884,12 +884,12 @@ impl<Word: Unsigned> BitPoly<Word> {
         }
 
         // Create some workspace for the reduction.
-        let mut s = BitVec::zeros(2 * d);
-        let mut h = BitVec::zeros(d);
+        let mut s = BitVector::zeros(2 * d);
+        let mut h = BitVector::zeros(d);
 
         // Closure that computes q(x) -> q(x)^2 mod P(x) where degree[q] < d.
         // The closure works on the coefficients of q(x) passed as the bit-vector `q`.
-        let mut square_step = |q: &mut BitVec<Word>| {
+        let mut square_step = |q: &mut BitVector<Word>| {
             // Compute q(x)^2, storing the resulting coefficients in the bit-vector `s`.
             q.riffled_into(&mut s);
 
@@ -913,7 +913,7 @@ impl<Word: Unsigned> BitPoly<Word> {
         // Note that we already handled edge case where P(x) = x + c above.
         if n_is_exponent {
             // Start with r(x) = x mod P(x)
-            let mut r = BitVec::zeros(d);
+            let mut r = BitVector::zeros(d);
             r.set(1, true);
 
             // Squaring, r(x) = x mod P(x) -> x^2 mod P(x) -> x^4 mod P(x) ... we get to x^(2^n) mod P(x).
@@ -925,7 +925,7 @@ impl<Word: Unsigned> BitPoly<Word> {
 
         // Normal small exponent case: n < d => x^n mod P(x) = x^n.
         if n < d {
-            return BitPoly::x_to_the(n);
+            return BitPolynomial::x_to_the(n);
         }
 
         // Matching power case: n == d => x^n mod P(x) = p(x)
@@ -938,7 +938,7 @@ impl<Word: Unsigned> BitPoly<Word> {
         let mut n_bit = n.prev_power_of_two();
 
         // Returning r(x) where degree[r] < d so r(x) = r_0 + r_1 x + ... + r_{d-1} x^{d-1} has d coefficients.
-        let mut r = BitVec::zeros(d);
+        let mut r = BitVector::zeros(d);
 
         // We start with r(x) = x mod P(x) which handles `n`'s most significant binary digit.
         r.set(1, true);
@@ -964,10 +964,10 @@ impl<Word: Unsigned> BitPoly<Word> {
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-// The `Default` trait implementation for the `BitPoly` type.
+// The `Default` trait implementation for the `BitPolynomial` type.
 // --------------------------------------------------------------------------------------------------------------------
 
-/// Implement the `Default` constructor trait for the `BitPoly` type.
+/// Implement the `Default` constructor trait for the `BitPolynomial` type.
 ///
 /// The default constructor creates an empty polynomial which is one form of the zero polynomial.
 /// No capacity is reserved until coefficients are added.
@@ -975,19 +975,19 @@ impl<Word: Unsigned> BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let p: BitPoly = Default::default();
+/// let p: BitPolynomial = Default::default();
 /// assert_eq!(p.to_string(), "0");
 /// ```
-impl<Word: Unsigned> Default for BitPoly<Word> {
+impl<Word: Unsigned> Default for BitPolynomial<Word> {
     #[inline]
     fn default() -> Self { Self::new() }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-// The `Index` trait implementation for the `BitPoly` type.
+// The `Index` trait implementation for the `BitPolynomial` type.
 // --------------------------------------------------------------------------------------------------------------------
 
-/// The `Index` trait implementation for the `BitPoly` type.
+/// The `Index` trait implementation for the `BitPolynomial` type.
 ///
 /// Returns the coefficient of `x^i`.
 ///
@@ -997,12 +997,12 @@ impl<Word: Unsigned> Default for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-/// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+/// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+/// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
 /// assert_eq!(p[2], true);
 /// assert_eq!(p[3], false);
 /// ```
-impl<Word: Unsigned> Index<usize> for BitPoly<Word> {
+impl<Word: Unsigned> Index<usize> for BitPolynomial<Word> {
     type Output = bool;
 
     #[inline]
@@ -1010,10 +1010,10 @@ impl<Word: Unsigned> Index<usize> for BitPoly<Word> {
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-// Various `Display`-like trait implementations for the `BitPoly` type.
+// Various `Display`-like trait implementations for the `BitPolynomial` type.
 // --------------------------------------------------------------------------------------------------------------------
 
-/// The `fmt::Display` trait implementation for the `BitPoly` type.
+/// The `fmt::Display` trait implementation for the `BitPolynomial` type.
 ///
 /// Returns a readable string representation of the bit-polynomial.
 ///
@@ -1024,12 +1024,12 @@ impl<Word: Unsigned> Index<usize> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-/// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+/// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+/// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
 /// assert_eq!(format!("{p}"), "1 + x^2 + x^4");
 /// assert_eq!(format!("{p:#}"), "1 + 0x + x^2 + 0x^3 + x^4 + 0x^5");
 /// ```
-impl<Word: Unsigned> fmt::Display for BitPoly<Word> {
+impl<Word: Unsigned> fmt::Display for BitPolynomial<Word> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
             write!(f, "{}", self.to_full_string_with_var("x"))
@@ -1040,7 +1040,7 @@ impl<Word: Unsigned> fmt::Display for BitPoly<Word> {
     }
 }
 
-/// The `fmt::Debug` trait implementation for the `BitPoly` type.
+/// The `fmt::Debug` trait implementation for the `BitPolynomial` type.
 ///
 /// Returns a debug string representation of the bit-polynomial.
 ///
@@ -1050,11 +1050,11 @@ impl<Word: Unsigned> fmt::Display for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let coeffs: BitVec = BitVec::from_string("101010").unwrap();
-/// let p: BitPoly = BitPoly::from_coefficients(coeffs);
+/// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+/// let p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
 /// assert_eq!(format!("{p:?}"), "1 + 0x + x^2 + 0x^3 + x^4 + 0x^5");
 /// ```
-impl<Word: Unsigned> fmt::Debug for BitPoly<Word> {
+impl<Word: Unsigned> fmt::Debug for BitPolynomial<Word> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", self.to_full_string_with_var("x")) }
 }
@@ -1069,39 +1069,39 @@ impl<Word: Unsigned> fmt::Debug for BitPoly<Word> {
 // - p += q  consumes q.
 // --------------------------------------------------------------------------------------------------------------------
 
-/// The `AddAssign` trait implementation for a `BitPoly` value and a `BitPoly` reference.
+/// The `AddAssign` trait implementation for a `BitPolynomial` value and a `BitPolynomial` reference.
 ///
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
-/// let q: BitPoly = BitPoly::x_to_the(2);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
+/// let q: BitPolynomial = BitPolynomial::x_to_the(2);
 /// assert_eq!(p.to_string(), "x^3");
 /// p += &q;
 /// assert_eq!(q.to_string(), "x^2");
 /// assert_eq!(p.to_string(), "x^2 + x^3");
 /// ```
-impl<Word: Unsigned> AddAssign<&BitPoly<Word>> for BitPoly<Word> {
+impl<Word: Unsigned> AddAssign<&BitPolynomial<Word>> for BitPolynomial<Word> {
     #[inline]
-    fn add_assign(&mut self, rhs: &BitPoly<Word>) { self.plus_eq(rhs); }
+    fn add_assign(&mut self, rhs: &BitPolynomial<Word>) { self.plus_eq(rhs); }
 }
 
-/// The `AddAssign` trait implementation for a `BitPoly` value and a `BitPoly` value.
+/// The `AddAssign` trait implementation for a `BitPolynomial` value and a `BitPolynomial` value.
 ///
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
 /// assert_eq!(p.to_string(), "x^3");
-/// p += BitPoly::x_to_the(2);
+/// p += BitPolynomial::x_to_the(2);
 /// assert_eq!(p.to_string(), "x^2 + x^3");
 /// ```
-impl<Word: Unsigned> AddAssign<BitPoly<Word>> for BitPoly<Word> {
+impl<Word: Unsigned> AddAssign<BitPolynomial<Word>> for BitPolynomial<Word> {
     #[inline]
-    fn add_assign(&mut self, rhs: BitPoly<Word>) { self.plus_eq(&rhs); }
+    fn add_assign(&mut self, rhs: BitPolynomial<Word>) { self.plus_eq(&rhs); }
 }
 
-/// The `SubAssign` trait implementation for a `BitPoly` value and a `BitPoly` reference.
+/// The `SubAssign` trait implementation for a `BitPolynomial` value and a `BitPolynomial` reference.
 ///
 /// # Note
 /// In GF(2), addition and subtraction are the same operation.
@@ -1109,19 +1109,19 @@ impl<Word: Unsigned> AddAssign<BitPoly<Word>> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
-/// let q: BitPoly = BitPoly::x_to_the(2);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
+/// let q: BitPolynomial = BitPolynomial::x_to_the(2);
 /// assert_eq!(p.to_string(), "x^3");
 /// p -= &q;
 /// assert_eq!(q.to_string(), "x^2");
 /// assert_eq!(p.to_string(), "x^2 + x^3");
 /// ```
-impl<Word: Unsigned> SubAssign<&BitPoly<Word>> for BitPoly<Word> {
+impl<Word: Unsigned> SubAssign<&BitPolynomial<Word>> for BitPolynomial<Word> {
     #[inline]
-    fn sub_assign(&mut self, rhs: &BitPoly<Word>) { self.plus_eq(rhs); }
+    fn sub_assign(&mut self, rhs: &BitPolynomial<Word>) { self.plus_eq(rhs); }
 }
 
-/// The `SubAssign` trait implementation for a `BitPoly` with another `BitPoly` value.
+/// The `SubAssign` trait implementation for a `BitPolynomial` with another `BitPolynomial` value.
 ///
 /// # Note
 /// - In GF(2) subtraction is the same as addition.
@@ -1129,17 +1129,17 @@ impl<Word: Unsigned> SubAssign<&BitPoly<Word>> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
 /// assert_eq!(p.to_string(), "x^3");
-/// p -= BitPoly::x_to_the(2);
+/// p -= BitPolynomial::x_to_the(2);
 /// assert_eq!(p.to_string(), "x^2 + x^3");
 /// ```
-impl<Word: Unsigned> SubAssign<BitPoly<Word>> for BitPoly<Word> {
+impl<Word: Unsigned> SubAssign<BitPolynomial<Word>> for BitPolynomial<Word> {
     #[inline]
-    fn sub_assign(&mut self, rhs: BitPoly<Word>) { self.plus_eq(&rhs); }
+    fn sub_assign(&mut self, rhs: BitPolynomial<Word>) { self.plus_eq(&rhs); }
 }
 
-/// The `MulAssign` trait implementation for a `BitPoly` value and a `BitPoly` reference.
+/// The `MulAssign` trait implementation for a `BitPolynomial` value and a `BitPolynomial` reference.
 ///
 /// Multiplying polynomials is achieved by convolving their coefficient vectors.
 ///
@@ -1149,22 +1149,22 @@ impl<Word: Unsigned> SubAssign<BitPoly<Word>> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
-/// let q: BitPoly = BitPoly::x_to_the(2);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
+/// let q: BitPolynomial = BitPolynomial::x_to_the(2);
 /// assert_eq!(p.to_string(), "x^3");
 /// assert_eq!(q.to_string(), "x^2");
 /// p *= &q;
 /// assert_eq!(p.to_string(), "x^5");
 /// ```
-impl<Word: Unsigned> MulAssign<&BitPoly<Word>> for BitPoly<Word> {
+impl<Word: Unsigned> MulAssign<&BitPolynomial<Word>> for BitPolynomial<Word> {
     #[inline]
-    fn mul_assign(&mut self, rhs: &BitPoly<Word>) {
+    fn mul_assign(&mut self, rhs: &BitPolynomial<Word>) {
         let result = self.convolved_with(rhs);
         *self = result;
     }
 }
 
-/// The `MulAssign` trait implementation for two `BitPoly` values.
+/// The `MulAssign` trait implementation for two `BitPolynomial` values.
 ///
 /// # Note
 /// This consumes the right-hand side.
@@ -1172,14 +1172,14 @@ impl<Word: Unsigned> MulAssign<&BitPoly<Word>> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
 /// assert_eq!(p.to_string(), "x^3");
-/// p *= BitPoly::x_to_the(2);
+/// p *= BitPolynomial::x_to_the(2);
 /// assert_eq!(p.to_string(), "x^5");
 /// ```
-impl<Word: Unsigned> MulAssign<BitPoly<Word>> for BitPoly<Word> {
+impl<Word: Unsigned> MulAssign<BitPolynomial<Word>> for BitPolynomial<Word> {
     #[inline]
-    fn mul_assign(&mut self, rhs: BitPoly<Word>) {
+    fn mul_assign(&mut self, rhs: BitPolynomial<Word>) {
         let result = self.convolved_with(&rhs);
         *self = result;
     }
@@ -1198,111 +1198,111 @@ impl<Word: Unsigned> MulAssign<BitPoly<Word>> for BitPoly<Word> {
 // --------------------------------------------------------------------------------------------------------------------
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `&lhs + &rhs` as new bit-polynomial
-impl<Word: Unsigned> Add<&BitPoly<Word>> for &BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Add<&BitPolynomial<Word>> for &BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn add(self, rhs: &BitPoly<Word>) -> Self::Output { self.plus(rhs) }
+    fn add(self, rhs: &BitPolynomial<Word>) -> Self::Output { self.plus(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `&lhs + rhs` as new bit-polynomial consuming `rhs`.
-impl<Word: Unsigned> Add<&BitPoly<Word>> for BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Add<&BitPolynomial<Word>> for BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn add(self, rhs: &BitPoly<Word>) -> Self::Output { self.plus(rhs) }
+    fn add(self, rhs: &BitPolynomial<Word>) -> Self::Output { self.plus(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `lhs + &rhs` as new bit-polynomial consuming `lhs`.
-impl<Word: Unsigned> Add<BitPoly<Word>> for &BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Add<BitPolynomial<Word>> for &BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn add(self, rhs: BitPoly<Word>) -> Self::Output { self.plus(&rhs) }
+    fn add(self, rhs: BitPolynomial<Word>) -> Self::Output { self.plus(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `lhs + rhs` as new bit-polynomial consuming both operands.
-impl<Word: Unsigned> Add<BitPoly<Word>> for BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Add<BitPolynomial<Word>> for BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn add(self, rhs: BitPoly<Word>) -> Self::Output { self.plus(&rhs) }
+    fn add(self, rhs: BitPolynomial<Word>) -> Self::Output { self.plus(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `&lhs - &rhs` as new bit-polynomial
 /// Note that subtraction in GF(2) is equivalent to addition.
-impl<Word: Unsigned> Sub<&BitPoly<Word>> for &BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Sub<&BitPolynomial<Word>> for &BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn sub(self, rhs: &BitPoly<Word>) -> Self::Output { self.plus(rhs) }
+    fn sub(self, rhs: &BitPolynomial<Word>) -> Self::Output { self.plus(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `&lhs - rhs` as new bit-polynomial consuming `rhs`.
 /// Note that subtraction in GF(2) is equivalent to addition.
-impl<Word: Unsigned> Sub<&BitPoly<Word>> for BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Sub<&BitPolynomial<Word>> for BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn sub(self, rhs: &BitPoly<Word>) -> Self::Output { self.plus(rhs) }
+    fn sub(self, rhs: &BitPolynomial<Word>) -> Self::Output { self.plus(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `lhs - &rhs` as new bit-polynomial consuming `lhs`.
 /// Note that subtraction in GF(2) is equivalent to addition.
-impl<Word: Unsigned> Sub<BitPoly<Word>> for &BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Sub<BitPolynomial<Word>> for &BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn sub(self, rhs: BitPoly<Word>) -> Self::Output { self.plus(&rhs) }
+    fn sub(self, rhs: BitPolynomial<Word>) -> Self::Output { self.plus(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `lhs - rhs` as new bit-polynomial consuming both operands.
 /// Note that subtraction in GF(2) is equivalent to addition.
-impl<Word: Unsigned> Sub<BitPoly<Word>> for BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Sub<BitPolynomial<Word>> for BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn sub(self, rhs: BitPoly<Word>) -> Self::Output { self.plus(&rhs) }
+    fn sub(self, rhs: BitPolynomial<Word>) -> Self::Output { self.plus(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `&lhs * &rhs` as new bit-polynomial
 /// Polynomial multiplication is performed using convolutions.
-impl<Word: Unsigned> Mul<&BitPoly<Word>> for &BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Mul<&BitPolynomial<Word>> for &BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn mul(self, rhs: &BitPoly<Word>) -> Self::Output { self.convolved_with(rhs) }
+    fn mul(self, rhs: &BitPolynomial<Word>) -> Self::Output { self.convolved_with(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `&lhs * rhs` as new bit-polynomial consuming `rhs`.
 /// Polynomial multiplication is performed using convolutions.
-impl<Word: Unsigned> Mul<&BitPoly<Word>> for BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Mul<&BitPolynomial<Word>> for BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn mul(self, rhs: &BitPoly<Word>) -> Self::Output { self.convolved_with(rhs) }
+    fn mul(self, rhs: &BitPolynomial<Word>) -> Self::Output { self.convolved_with(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `lhs * &rhs` as new bit-polynomial consuming `lhs`.
 /// Polynomial multiplication is performed using convolutions.
-impl<Word: Unsigned> Mul<BitPoly<Word>> for &BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Mul<BitPolynomial<Word>> for &BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn mul(self, rhs: BitPoly<Word>) -> Self::Output { self.convolved_with(&rhs) }
+    fn mul(self, rhs: BitPolynomial<Word>) -> Self::Output { self.convolved_with(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-polynomials, this returns `lhs * rhs` as new bit-polynomial consuming both operands.
 /// Polynomial multiplication is performed using convolutions.
-impl<Word: Unsigned> Mul<BitPoly<Word>> for BitPoly<Word> {
-    type Output = BitPoly<Word>;
+impl<Word: Unsigned> Mul<BitPolynomial<Word>> for BitPolynomial<Word> {
+    type Output = BitPolynomial<Word>;
 
     #[inline]
-    fn mul(self, rhs: BitPoly<Word>) -> Self::Output { self.convolved_with(&rhs) }
+    fn mul(self, rhs: BitPolynomial<Word>) -> Self::Output { self.convolved_with(&rhs) }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-// If the compiler supports the `unboxed_closures` & `fn_traits` features, we can use the `BitPoly` type as a
+// If the compiler supports the `unboxed_closures` & `fn_traits` features, we can use the `BitPolynomial` type as a
 // function over the field GF(2). So you can use the natural call `p(x)` instead of the long hand `p.eval_bool(x)`.
 // You can also call `p(M)` where `M` is a bit-matrix instead of the long hand `p.eval_matrix(M)`.
 //
@@ -1318,7 +1318,7 @@ impl<Word: Unsigned> Mul<BitPoly<Word>> for BitPoly<Word> {
 // - `FnOnce`
 // --------------------------------------------------------------------------------------------------------------------
 
-/// The `Fn` trait implementation for the `BitPoly` type with a `bool` argument.
+/// The `Fn` trait implementation for the `BitPolynomial` type with a `bool` argument.
 ///
 /// # Note
 /// Currently (rust 1.87.0) this requires unstable features (nightly toolchain).
@@ -1326,16 +1326,16 @@ impl<Word: Unsigned> Mul<BitPoly<Word>> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let p: BitPoly = BitPoly::x_to_the(3);
+/// let p: BitPolynomial = BitPolynomial::x_to_the(3);
 /// assert_eq!(p(true), true);
 /// assert_eq!(p(false), false);
 /// ```
 #[cfg(feature = "unstable")]
-impl<Word: Unsigned> Fn<(bool,)> for BitPoly<Word> {
+impl<Word: Unsigned> Fn<(bool,)> for BitPolynomial<Word> {
     extern "rust-call" fn call(&self, args: (bool,)) -> Self::Output { self.eval_bool(args.0) }
 }
 
-/// The `FnMut` trait implementation for the `BitPoly` type with a `bool` argument.
+/// The `FnMut` trait implementation for the `BitPolynomial` type with a `bool` argument.
 ///
 /// # Note
 /// - We really only care about the `Fn` trait, but it has `FnMut` as a super-trait.
@@ -1344,16 +1344,16 @@ impl<Word: Unsigned> Fn<(bool,)> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
 /// assert_eq!(p(true), true);
 /// assert_eq!(p(false), false);
 /// ```
 #[cfg(feature = "unstable")]
-impl<Word: Unsigned> FnMut<(bool,)> for BitPoly<Word> {
+impl<Word: Unsigned> FnMut<(bool,)> for BitPolynomial<Word> {
     extern "rust-call" fn call_mut(&mut self, args: (bool,)) -> Self::Output { self.eval_bool(args.0) }
 }
 
-/// The `FnOnce` trait implementation for the `BitPoly` type with a `bool` argument.
+/// The `FnOnce` trait implementation for the `BitPolynomial` type with a `bool` argument.
 ///
 /// # Note
 /// - We really only care about the `Fn` trait, but it has `FnOnce` as a super-super-trait.
@@ -1362,18 +1362,18 @@ impl<Word: Unsigned> FnMut<(bool,)> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
 /// assert_eq!(p(true), true);
 /// assert_eq!(p(false), false);
 /// ```
 #[cfg(feature = "unstable")]
-impl<Word: Unsigned> FnOnce<(bool,)> for BitPoly<Word> {
+impl<Word: Unsigned> FnOnce<(bool,)> for BitPolynomial<Word> {
     type Output = bool;
 
     extern "rust-call" fn call_once(self, args: (bool,)) -> Self::Output { self.eval_bool(args.0) }
 }
 
-/// The `Fn` trait implementation for the `BitPoly` type with a `BitMat` reference argument.
+/// The `Fn` trait implementation for the `BitPolynomial` type with a `BitMatrix` reference argument.
 ///
 /// # Note
 /// Currently (rust 1.87.0) this requires unstable features (nightly toolchain).
@@ -1381,16 +1381,16 @@ impl<Word: Unsigned> FnOnce<(bool,)> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let p: BitPoly = BitPoly::x_to_the(3);
-/// let m: BitMat = BitMat::identity(3);
-/// assert_eq!(p(&m), BitMat::identity(3));
+/// let p: BitPolynomial = BitPolynomial::x_to_the(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
+/// assert_eq!(p(&m), BitMatrix::identity(3));
 /// ```
 #[cfg(feature = "unstable")]
-impl<Word: Unsigned> Fn<(&BitMat<Word>,)> for BitPoly<Word> {
-    extern "rust-call" fn call(&self, args: (&BitMat<Word>,)) -> Self::Output { self.eval_matrix(args.0) }
+impl<Word: Unsigned> Fn<(&BitMatrix<Word>,)> for BitPolynomial<Word> {
+    extern "rust-call" fn call(&self, args: (&BitMatrix<Word>,)) -> Self::Output { self.eval_matrix(args.0) }
 }
 
-/// The `FnMut` trait implementation for the `BitPoly` type with a `BitMat` reference argument.
+/// The `FnMut` trait implementation for the `BitPolynomial` type with a `BitMatrix` reference argument.
 ///
 /// # Note
 /// - We really only care about the `Fn` trait, but it has `FnMut` as a super-trait.
@@ -1399,16 +1399,16 @@ impl<Word: Unsigned> Fn<(&BitMat<Word>,)> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
-/// let m: BitMat = BitMat::identity(3);
-/// assert_eq!(p(&m), BitMat::identity(3));
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
+/// assert_eq!(p(&m), BitMatrix::identity(3));
 /// ```
 #[cfg(feature = "unstable")]
-impl<Word: Unsigned> FnMut<(&BitMat<Word>,)> for BitPoly<Word> {
-    extern "rust-call" fn call_mut(&mut self, args: (&BitMat<Word>,)) -> Self::Output { self.eval_matrix(args.0) }
+impl<Word: Unsigned> FnMut<(&BitMatrix<Word>,)> for BitPolynomial<Word> {
+    extern "rust-call" fn call_mut(&mut self, args: (&BitMatrix<Word>,)) -> Self::Output { self.eval_matrix(args.0) }
 }
 
-/// The `FnOnce` trait implementation for the `BitPoly` type with a `BitMat` reference argument.
+/// The `FnOnce` trait implementation for the `BitPolynomial` type with a `BitMatrix` reference argument.
 ///
 /// # Note
 /// - We really only care about the `Fn` trait, but it has `FnOnce` as a super-super-trait.
@@ -1417,13 +1417,13 @@ impl<Word: Unsigned> FnMut<(&BitMat<Word>,)> for BitPoly<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut p: BitPoly = BitPoly::x_to_the(3);
-/// let m: BitMat = BitMat::identity(3);
-/// assert_eq!(p(&m), BitMat::identity(3));
+/// let mut p: BitPolynomial = BitPolynomial::x_to_the(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
+/// assert_eq!(p(&m), BitMatrix::identity(3));
 /// ```
 #[cfg(feature = "unstable")]
-impl<Word: Unsigned> FnOnce<(&BitMat<Word>,)> for BitPoly<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> FnOnce<(&BitMatrix<Word>,)> for BitPolynomial<Word> {
+    type Output = BitMatrix<Word>;
 
-    extern "rust-call" fn call_once(self, args: (&BitMat<Word>,)) -> Self::Output { self.eval_matrix(args.0) }
+    extern "rust-call" fn call_once(self, args: (&BitMatrix<Word>,)) -> Self::Output { self.eval_matrix(args.0) }
 }

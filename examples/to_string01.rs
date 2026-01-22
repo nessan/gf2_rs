@@ -1,4 +1,4 @@
-/// Compare the naive `to_*_string` implementation to the ones we implemented for `BitVec`
+/// Compare the naive `to_*_string` implementation to the ones we implemented for `BitVector`
 /// Run in release mode for realistic timings.
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
@@ -7,7 +7,7 @@ use gf2::*;
 mod naive;
 
 fn test_to_binary_string(len: usize, n_trials: usize) {
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
     // Create lots of random bit-vectors and check that the naive and optimized versions agree.
     for _ in 0..n_trials {
         let bv: BV = BV::random(len);
@@ -16,7 +16,7 @@ fn test_to_binary_string(len: usize, n_trials: usize) {
 }
 
 fn test_to_hex_string(len: usize, n_trials: usize) {
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
     // Create lots of random bit-vectors and check that the naive and optimized versions agree.
     for _ in 0..n_trials {
         let bv: BV = BV::random(len);

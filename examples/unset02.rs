@@ -12,7 +12,7 @@ fn main() {
 
     // Create a bit-vector with a single unset bit at the very end...
     let len = 1_000_000;
-    let mut bv: BitVec<u8> = BitVec::ones(len);
+    let mut bv: BitVector<u8> = BitVector::ones(len);
     bv.set(len - 1, false);
 
     let mut result: Option<usize> = None;

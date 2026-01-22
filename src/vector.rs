@@ -1,4 +1,4 @@
-//! [`BitVec`] is a  _dynamically sized_ vector over GF(2) --- a _bit-vector_.
+//! [`BitVector`] is a  _dynamically sized_ vector over GF(2) --- a _bit-vector_.
 
 use crate::{
     BitSlice,
@@ -8,7 +8,7 @@ use crate::{
 
 #[doc = include_str!("../docs/vec.md")]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
-pub struct BitVec<Word: Unsigned = usize> {
+pub struct BitVector<Word: Unsigned = usize> {
     // The number of bits in the bit-vector.
     m_len: usize,
 
@@ -16,36 +16,36 @@ pub struct BitVec<Word: Unsigned = usize> {
     m_store: Vec<Word>,
 }
 
-/// Implement the `BitStore` trait for `BitVec`.
-impl<Word: Unsigned> BitStore<Word> for BitVec<Word> {
-    /// Returns the number of *bits* in the `BitVec`.
+/// Implement the `BitStore` trait for `BitVector`.
+impl<Word: Unsigned> BitStore<Word> for BitVector<Word> {
+    /// Returns the number of *bits* in the `BitVector`.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::zeros(10);
+    /// let v: BitVector<u8> = BitVector::zeros(10);
     /// assert_eq!(v.len(), 10);
     /// ```
     fn len(&self) -> usize { self.m_len }
 
-    /// Returns a pointer to the real words underlying the `BitVec` as an [`Unsigned`] slice.
+    /// Returns a pointer to the real words underlying the `BitVector` as an [`Unsigned`] slice.
     fn store(&self) -> &[Word] { self.m_store.as_slice() }
 
-    /// Returns a pointer to the real words underlying the `BitVec` as an [`Unsigned`] mutable slice.
+    /// Returns a pointer to the real words underlying the `BitVector` as an [`Unsigned`] mutable slice.
     fn store_mut(&mut self) -> &mut [Word] { self.m_store.as_mut_slice() }
 
-    /// Returns the offset (in bits) of the first bit element in the `BitVec` within the first [`Unsigned`] word.
-    /// This is always zero for a `BitVec`.
+    /// Returns the offset (in bits) of the first bit element in the `BitVector` within the first [`Unsigned`] word.
+    /// This is always zero for a `BitVector`.
     fn offset(&self) -> u32 { 0 }
 
-    /// Returns the least number of [`Unsigned`] words needed to store the bits in the `BitVec`.
+    /// Returns the least number of [`Unsigned`] words needed to store the bits in the `BitVector`.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::zeros(6);
+    /// let v: BitVector<u8> = BitVector::zeros(6);
     /// assert_eq!(v.words(), 1);
-    /// let v: BitVec<u8> = BitVec::zeros(10);
+    /// let v: BitVector<u8> = BitVector::zeros(10);
     /// assert_eq!(v.words(), 2);
     /// ```
     #[inline]
@@ -54,15 +54,15 @@ impl<Word: Unsigned> BitStore<Word> for BitVec<Word> {
         self.m_store.len()
     }
 
-    /// Returns the [`Unsigned`] word at index `i` from the `BitVec`'s underlying store of words.
+    /// Returns the [`Unsigned`] word at index `i` from the `BitVector`'s underlying store of words.
     ///
     /// # Panics
-    /// In debug mode, panics if `i` is out of bounds for the `BitVec`.
+    /// In debug mode, panics if `i` is out of bounds for the `BitVector`.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::zeros(10);
+    /// let v: BitVector<u8> = BitVector::zeros(10);
     /// assert_eq!(v.word(0), 0);
     /// ```
     #[inline]
@@ -71,10 +71,10 @@ impl<Word: Unsigned> BitStore<Word> for BitVec<Word> {
         self.m_store[i]
     }
 
-    /// Sets the [`Unsigned`] word at index `i` in the `BitVec` to `word`.
+    /// Sets the [`Unsigned`] word at index `i` in the `BitVector` to `word`.
     ///
     /// # Panics
-    /// In debug mode, panics if `i` is out of bounds for the `BitVec`.
+    /// In debug mode, panics if `i` is out of bounds for the `BitVector`.
     ///
     /// # Note
     /// It is careful to only set the bits that are within the vector (the last word may only be partially occupied).
@@ -82,7 +82,7 @@ impl<Word: Unsigned> BitStore<Word> for BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::zeros(12);
+    /// let mut v: BitVector<u8> = BitVector::zeros(12);
     /// v.set_word(0, 0b1111_1111);
     /// v.set_word(1, 0b1111_1111);
     /// assert_eq!(v.to_string(), "111111111111");
@@ -107,7 +107,7 @@ impl<Word: Unsigned> BitStore<Word> for BitVec<Word> {
 }
 
 /// Constructors for bit-vectors.
-impl<Word: Unsigned> BitVec<Word> {
+impl<Word: Unsigned> BitVector<Word> {
     /// The default constructor creates an empty bit-vector.
     ///
     /// No capacity is reserved until elements are added.
@@ -115,7 +115,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::new();
+    /// let v: BitVector = BitVector::new();
     /// assert_eq!(v.len(), 0);
     /// assert_eq!(v.capacity(), 0);
     /// ```
@@ -131,7 +131,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::from_word(0b01010101, 10);
+    /// let v: BitVector<u8> = BitVector::from_word(0b01010101, 10);
     /// assert_eq!(v.len(), 10);
     /// assert_eq!(v.to_string(), "1010101010");
     /// ```
@@ -149,7 +149,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::with_capacity(10);
+    /// let v: BitVector = BitVector::with_capacity(10);
     /// assert_eq!(v.len(), 0);
     /// assert!(v.capacity() >= 10);
     /// ```
@@ -164,7 +164,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::zeros(10);
+    /// let v: BitVector = BitVector::zeros(10);
     /// assert_eq!(v.len(), 10);
     /// assert_eq!(v.count_zeros(), 10);
     /// ```
@@ -180,7 +180,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::ones(10);
+    /// let v: BitVector = BitVector::ones(10);
     /// assert_eq!(v.len(), 10);
     /// assert_eq!(v.count_ones(), 10);
     #[must_use]
@@ -197,9 +197,9 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::constant(true, 10);
+    /// let v: BitVector = BitVector::constant(true, 10);
     /// assert_eq!(v.to_string(), "1111111111");
-    /// let v: BitVec = BitVec::constant(false, 10);
+    /// let v: BitVector = BitVector::constant(false, 10);
     /// assert_eq!(v.to_string(), "0000000000");
     /// ```
     #[must_use]
@@ -218,13 +218,13 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::unit(5, 10);
+    /// let v: BitVector = BitVector::unit(5, 10);
     /// assert_eq!(v.to_string(), "0000010000");
     /// ```
     #[must_use]
     #[inline]
     pub fn unit(i: usize, len: usize) -> Self {
-        assert!(i < len, "Index {i} must be less than the length of the BitVec {len}!");
+        assert!(i < len, "Index {i} must be less than the length of the BitVector {len}!");
         let mut result = Self::zeros(len);
         result.set(i, true);
         result
@@ -237,7 +237,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::alternating(10);
+    /// let v: BitVector = BitVector::alternating(10);
     /// assert_eq!(v.len(), 10);
     /// assert_eq!(v.to_string(), "1010101010");
     /// ```
@@ -261,13 +261,13 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u8> = BitVec::from_unsigned(0b01010101_u8);
+    /// let v: BitVector<u8> = BitVector::from_unsigned(0b01010101_u8);
     /// assert_eq!(v.len(), 8);
     /// assert_eq!(v.to_string(), "10101010");
-    /// let v: BitVec<u8> = BitVec::from_unsigned(0b0101010101010101_u16);
+    /// let v: BitVector<u8> = BitVector::from_unsigned(0b0101010101010101_u16);
     /// assert_eq!(v.len(), 16);
     /// assert_eq!(v.to_string(), "1010101010101010");
-    /// let v: BitVec<u32> = BitVec::from_unsigned(0b01010101_u8);
+    /// let v: BitVector<u32> = BitVector::from_unsigned(0b01010101_u8);
     /// assert_eq!(v.len(), 8);
     /// assert_eq!(v.to_string(), "10101010");
     /// ```
@@ -285,28 +285,30 @@ impl<Word: Unsigned> BitVec<Word> {
     /// This is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying
     /// `Unsigned` word type for their storage -- i.e., the `Word` type for `self` may differ from the `SrcWord` type
     /// for the bit-store `src`. You can use it to convert between different `Word` type stores (e.g., from
-    /// `BitVec<u32>` to `BitVec<u8>`) as long as the sizes match.
+    /// `BitVector<u32>` to `BitVector<u8>`) as long as the sizes match.
     ///
     /// # Note
-    /// We also have implemented the [`From`] trait for [`BitVec`] from any bit-store type that forwards to this method.
+    /// We also have implemented the [`From`] trait for [`BitVector`] from any bit-store type that forwards to this
+    /// method.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let src: BitVec = BitVec::from_string("010101010101010101010101010101010101010101010101010101010101").unwrap();
-    /// let mut dst: BitVec = BitVec::from_store(&src);
+    /// let src: BitVector =
+    ///     BitVector::from_string("010101010101010101010101010101010101010101010101010101010101").unwrap();
+    /// let mut dst: BitVector = BitVector::from_store(&src);
     /// assert_eq!(dst.to_string(), src.to_string());
-    /// let src: BitVec<u8> = BitVec::from_string("1011001110001111").unwrap();
-    /// let mut dst: BitVec<u32> = BitVec::from_store(&src);
+    /// let src: BitVector<u8> = BitVector::from_string("1011001110001111").unwrap();
+    /// let mut dst: BitVector<u32> = BitVector::from_store(&src);
     /// assert_eq!(dst.to_string(), src.to_string());
-    /// let src: BitVec<u16> = BitVec::from_string("101100111000111110110011100011111011001110001111").unwrap();
-    /// let mut dst: BitVec<u8> = BitVec::from_store(&src);
+    /// let src: BitVector<u16> = BitVector::from_string("101100111000111110110011100011111011001110001111").unwrap();
+    /// let mut dst: BitVector<u8> = BitVector::from_store(&src);
     /// assert_eq!(dst.to_string(), src.to_string());
-    /// let v1: BitVec = BitVec::ones(10);
+    /// let v1: BitVector = BitVector::ones(10);
     /// let slice = v1.slice(0..4);
-    /// let v2: BitVec = BitVec::from_store(&slice);
+    /// let v2: BitVector = BitVector::from_store(&slice);
     /// assert_eq!(v2.to_string(), "1111");
-    /// let v3: BitVec = slice.into();
+    /// let v3: BitVector = slice.into();
     /// assert_eq!(v3.to_string(), "1111");
     /// ```
     #[must_use]
@@ -326,7 +328,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::from_fn(10, |i| i % 2 == 0);
+    /// let v: BitVector = BitVector::from_fn(10, |i| i % 2 == 0);
     /// assert_eq!(v.len(), 10);
     /// assert_eq!(v.to_string(), "1010101010");
     /// ```
@@ -339,7 +341,7 @@ impl<Word: Unsigned> BitVec<Word> {
 }
 
 /// Constructors that set the elements of a bit-vector randomly.
-impl<Word: Unsigned> BitVec<Word> {
+impl<Word: Unsigned> BitVector<Word> {
     /// Constructs a random bit-vector with `len` elements where each bit is set/unset with probability 50/50.
     ///
     /// The random number generator is seeded on first use with a scrambled version of the current time so you get
@@ -350,7 +352,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::random(10);
+    /// let v: BitVector = BitVector::random(10);
     /// assert_eq!(v.len(), 10);
     /// ```
     #[must_use]
@@ -371,8 +373,8 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v1: BitVec = BitVec::random_seeded(1000, 42);
-    /// let v2: BitVec = BitVec::random_seeded(1000, 42);
+    /// let v1: BitVector = BitVector::random_seeded(1000, 42);
+    /// let v2: BitVector = BitVector::random_seeded(1000, 42);
     /// assert_eq!(v1, v2);
     /// ```
     #[must_use]
@@ -393,7 +395,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::random_biased(10, 0.5);
+    /// let v: BitVector = BitVector::random_biased(10, 0.5);
     /// assert_eq!(v.len(), 10);
     /// ```
     #[must_use]
@@ -412,10 +414,10 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::random_biased_seeded(10, 1.2, 42); // All bits set since p > 1
+    /// let v: BitVector = BitVector::random_biased_seeded(10, 1.2, 42); // All bits set since p > 1
     /// assert_eq!(v.count_ones(), 10);
-    /// let u: BitVec = BitVec::random_biased_seeded(100, 0.85, 42); // Using same seed for u and v.
-    /// let v: BitVec = BitVec::random_biased_seeded(100, 0.85, 42);
+    /// let u: BitVector = BitVector::random_biased_seeded(100, 0.85, 42); // Using same seed for u and v.
+    /// let v: BitVector = BitVector::random_biased_seeded(100, 0.85, 42);
     /// assert_eq!(u, v);
     /// ```
     #[must_use]
@@ -427,7 +429,7 @@ impl<Word: Unsigned> BitVec<Word> {
 }
 
 /// Construct bit-vectors from strings. These constructors can fail.
-impl<Word: Unsigned> BitVec<Word> {
+impl<Word: Unsigned> BitVector<Word> {
     /// Tries to construct a bit-vector from any string `s`.
     ///
     /// `s` can contain whitespace, commas, and underscores and optionally a "0b", "0x", or "0X" prefix.
@@ -442,13 +444,13 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::from_string("0b1010_1010_10").unwrap();
+    /// let v: BitVector = BitVector::from_string("0b1010_1010_10").unwrap();
     /// assert_eq!(v.to_string(), "1010101010");
-    /// let v: BitVec = BitVec::from_string("AA").unwrap();
+    /// let v: BitVector = BitVector::from_string("AA").unwrap();
     /// assert_eq!(v.to_string(), "10101010");
-    /// let v: BitVec = BitVec::from_string("10101010").unwrap();
+    /// let v: BitVector = BitVector::from_string("10101010").unwrap();
     /// assert_eq!(v.to_string(), "10101010");
-    /// let v: BitVec = BitVec::from_string("0x1.8").unwrap();
+    /// let v: BitVector = BitVector::from_string("0x1.8").unwrap();
     /// assert_eq!(v.to_string(), "001");
     /// ```
     #[must_use]
@@ -484,7 +486,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::from_binary_string("0b1010_1010_10").expect("Input is not binary!");
+    /// let v: BitVector = BitVector::from_binary_string("0b1010_1010_10").expect("Input is not binary!");
     /// assert_eq!(v.to_string(), "1010101010");
     /// ```
     #[must_use]
@@ -529,15 +531,15 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::from_hex_string("0xAA").expect("Input is not interpretable as hex!");
+    /// let v: BitVector = BitVector::from_hex_string("0xAA").expect("Input is not interpretable as hex!");
     /// assert_eq!(v.to_string(), "10101010");
-    /// let v: BitVec = BitVec::from_hex_string("0x1").expect("Input is not interpretable as hex!");
+    /// let v: BitVector = BitVector::from_hex_string("0x1").expect("Input is not interpretable as hex!");
     /// assert_eq!(v.to_string(), "0001");
-    /// let v: BitVec = BitVec::from_hex_string("0x1.8").expect("Input is not interpretable as hex!");
+    /// let v: BitVector = BitVector::from_hex_string("0x1.8").expect("Input is not interpretable as hex!");
     /// assert_eq!(v.to_string(), "001");
-    /// let v: BitVec = BitVec::from_hex_string("0x1.4").expect("Input is not interpretable as hex!");
+    /// let v: BitVector = BitVector::from_hex_string("0x1.4").expect("Input is not interpretable as hex!");
     /// assert_eq!(v.to_string(), "01");
-    /// let v: BitVec = BitVec::from_hex_string("0x1.2").expect("Input is not interpretable as hex!");
+    /// let v: BitVector = BitVector::from_hex_string("0x1.2").expect("Input is not interpretable as hex!");
     /// assert_eq!(v.to_string(), "1");
     /// ```
     #[must_use]
@@ -591,7 +593,7 @@ impl<Word: Unsigned> BitVec<Word> {
 }
 
 /// Resizing and capacity methods for bit-vectors.
-impl<Word: Unsigned> BitVec<Word> {
+impl<Word: Unsigned> BitVector<Word> {
     /// Returns the capacity of the bit-vector.
     ///
     /// This is the total number of elements that can be stored without reallocating.
@@ -600,7 +602,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u64> = BitVec::zeros(10);
+    /// let v: BitVector<u64> = BitVector::zeros(10);
     /// assert_eq!(v.capacity(), 64);
     /// ```
     #[must_use]
@@ -612,7 +614,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec<u64> = BitVec::zeros(10);
+    /// let v: BitVector<u64> = BitVector::zeros(10);
     /// assert_eq!(v.remaining_capacity(), 54);
     /// ```
     #[must_use]
@@ -624,7 +626,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u64> = BitVec::zeros(1000);
+    /// let mut v: BitVector<u64> = BitVector::zeros(1000);
     /// v.resize(15);
     /// v.shrink_to_fit();
     /// assert_eq!(v.capacity(), 64);
@@ -641,7 +643,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::zeros(10);
+    /// let mut v: BitVector<u8> = BitVector::zeros(10);
     /// let capacity = v.capacity();
     /// v.clear();
     /// assert_eq!(v.len(), 0);
@@ -662,7 +664,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::ones(1000);
+    /// let mut v: BitVector<u8> = BitVector::ones(1000);
     /// v.resize(11);
     /// assert_eq!(v.len(), 11);
     /// assert_eq!(v.to_string(), "11111111111");
@@ -701,13 +703,13 @@ impl<Word: Unsigned> BitVec<Word> {
 }
 
 /// Methods to add or remove single elements from the end of a bit-vector.
-impl<Word: Unsigned> BitVec<Word> {
+impl<Word: Unsigned> BitVector<Word> {
     /// Appends a single `bool` element to the end of the bit-vector.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.push(true);
     /// assert_eq!(v.to_string(), "00000000001");
     /// v.push(false);
@@ -727,7 +729,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::zeros(10);
+    /// let mut v: BitVector = BitVector::zeros(10);
     /// v.push(true);
     /// assert_eq!(v.to_string(), "00000000001");
     /// assert_eq!(v.pop(), Some(true));
@@ -747,7 +749,7 @@ impl<Word: Unsigned> BitVec<Word> {
 }
 
 /// Methods that append bits from various sources to the end of a bit-vector.
-impl<Word: Unsigned> BitVec<Word> {
+impl<Word: Unsigned> BitVector<Word> {
     /// Appends *all* the bits from *any* unsigned type `src` to the end of the bit-vector.
     ///
     /// # Note
@@ -758,7 +760,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::zeros(6);
+    /// let mut v: BitVector<u8> = BitVector::zeros(6);
     /// v.append_unsigned(u8::MAX);
     /// assert_eq!(v.len(), 14);
     /// assert_eq!(v.to_string(), "00000011111111");
@@ -785,8 +787,8 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut dst: BitVec<u8> = BitVec::zeros(10);
-    /// let src: BitVec<u16> = BitVec::ones(10);
+    /// let mut dst: BitVector<u8> = BitVector::zeros(10);
+    /// let src: BitVector<u16> = BitVector::ones(10);
     /// dst.append_store(&src);
     /// assert_eq!(dst.to_string(), "00000000001111111111");
     /// ```
@@ -810,7 +812,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::new();
+    /// let mut v: BitVector<u8> = BitVector::new();
     /// v.append_digit('A', 16);
     /// assert_eq!(v.to_string(), "1010");
     /// v.append_digit('X', 16);
@@ -854,7 +856,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::new();
+    /// let mut v: BitVector<u8> = BitVector::new();
     /// v.append_hex_digit('F');
     /// assert_eq!(v.to_string(), "1111", "v.append_hex_digit('F') = {v}");
     /// v.append_hex_digit('X');
@@ -880,7 +882,7 @@ impl<Word: Unsigned> BitVec<Word> {
 }
 
 ///  Methods to remove items from the end of a bit-vector.
-impl<Word: Unsigned> BitVec<Word> {
+impl<Word: Unsigned> BitVector<Word> {
     /// Splits a bit-vector into two at the given index. The second part is returned as a new bit-vector.
     ///
     /// On return, `dst` contains the bits from `at` to the end of the bit-vector. The `self` bit-vector is modified.
@@ -891,14 +893,14 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::alternating(10);
+    /// let mut v: BitVector = BitVector::alternating(10);
     /// let dst = v.split_off(5);
     /// assert_eq!(v.to_string(), "10101");
     /// assert_eq!(dst.to_string(), "01010");
     /// ```
     #[must_use]
-    pub fn split_off(&mut self, at: usize) -> BitVec<Word> {
-        let mut dst = BitVec::new();
+    pub fn split_off(&mut self, at: usize) -> BitVector<Word> {
+        let mut dst = BitVector::new();
         self.split_off_into(at, &mut dst);
         dst
     }
@@ -913,13 +915,13 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec = BitVec::alternating(10);
-    /// let mut dst: BitVec = BitVec::new();
+    /// let mut v: BitVector = BitVector::alternating(10);
+    /// let mut dst: BitVector = BitVector::new();
     /// v.split_off_into(5, &mut dst);
     /// assert_eq!(v.to_string(), "10101");
     /// assert_eq!(dst.to_string(), "01010");
     /// ```
-    pub fn split_off_into(&mut self, at: usize, dst: &mut BitVec<Word>) {
+    pub fn split_off_into(&mut self, at: usize, dst: &mut BitVector<Word>) {
         assert!(at <= self.len(), "split point {at} is beyond the end of the bit-vector");
         dst.clear();
         dst.append_store(&self.slice(at..self.len()));
@@ -938,7 +940,7 @@ impl<Word: Unsigned> BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::zeros(10);
+    /// let mut v: BitVector<u8> = BitVector::zeros(10);
     /// v.append_unsigned(u8::MAX);
     /// assert_eq!(v.split_off_word(), Some(u8::MAX));
     /// assert_eq!(v.to_string(), "0000000000");
@@ -981,13 +983,13 @@ impl<Word: Unsigned> BitVec<Word> {
     ///
     /// # Note
     /// You can remove a primitive unsigned word of *any size* from the end of the bit-vector. For example, you can
-    /// remove a `u16` from the end of a `BitVec<u8>` with 24 bit elements and it will be converted to a `u16`
+    /// remove a `u16` from the end of a `BitVector<u8>` with 24 bit elements and it will be converted to a `u16`
     /// appropriately leaving the remaining 8 bits untouched in the bit-vector.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut v: BitVec<u8> = BitVec::ones(24);
+    /// let mut v: BitVector<u8> = BitVector::ones(24);
     /// assert_eq!(v.split_off_unsigned::<u16>(), Some(u16::MAX));
     /// assert_eq!(v.to_string(), "11111111");
     /// assert_eq!(v.split_off_unsigned::<u16>(), Some(u8::MAX as u16));
@@ -1035,7 +1037,7 @@ impl<Word: Unsigned> BitVec<Word> {
 // --------------------------------------------------------------------------------------------------------------------
 
 /// Implement the `Default` trait for a bit-vector.
-impl<Word: Unsigned> Default for BitVec<Word> {
+impl<Word: Unsigned> Default for BitVector<Word> {
     /// The default constructor creates an empty bit-vector.
     ///
     /// No capacity is reserved until elements are added.
@@ -1043,7 +1045,7 @@ impl<Word: Unsigned> Default for BitVec<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::default();
+    /// let v: BitVector = BitVector::default();
     /// assert_eq!(v.len(), 0);
     /// assert_eq!(v.words(), 0);
     /// ```
@@ -1051,7 +1053,7 @@ impl<Word: Unsigned> Default for BitVec<Word> {
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-// Implement the `From` trait for a `BitVec` from a `BitSlice`.
+// Implement the `From` trait for a `BitVector` from a `BitSlice`.
 // --------------------------------------------------------------------------------------------------------------------
 
 /// Convert a [`BitSlice`] into a bit-vector. The slice is consumed by the operation.
@@ -1059,16 +1061,16 @@ impl<Word: Unsigned> Default for BitVec<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v1: BitVec = BitVec::alternating(10);
+/// let v1: BitVector = BitVector::alternating(10);
 /// let slice = v1.slice(0..5);
-/// let mut v2: BitVec = slice.into();
+/// let mut v2: BitVector = slice.into();
 /// assert_eq!(v2.to_string(), "10101");
 /// v2.flip_all();
 /// assert_eq!(v2.to_string(), "01010");
 /// assert_eq!(v1.to_string(), "1010101010");
 /// ```
-impl<'a, Word: Unsigned> From<BitSlice<'a, Word>> for BitVec<Word> {
-    fn from(src: BitSlice<'a, Word>) -> Self { BitVec::from_store(&src) }
+impl<'a, Word: Unsigned> From<BitSlice<'a, Word>> for BitVector<Word> {
+    fn from(src: BitSlice<'a, Word>) -> Self { BitVector::from_store(&src) }
 }
 
 /// Convert a *reference* to a [`BitSlice`] into a bit-vector. The slice continues unchanged.
@@ -1076,14 +1078,14 @@ impl<'a, Word: Unsigned> From<BitSlice<'a, Word>> for BitVec<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v1: BitVec = BitVec::alternating(10);
+/// let v1: BitVector = BitVector::alternating(10);
 /// let slice = v1.slice(0..5);
-/// let mut v2: BitVec = slice.into();
+/// let mut v2: BitVector = slice.into();
 /// assert_eq!(v2.to_string(), "10101");
 /// v2.flip_all();
 /// assert_eq!(v2.to_string(), "01010");
 /// assert_eq!(v1.to_string(), "1010101010");
 /// ```
-impl<'a, Word: Unsigned> From<&BitSlice<'a, Word>> for BitVec<Word> {
-    fn from(src: &BitSlice<'a, Word>) -> Self { BitVec::from_store(src) }
+impl<'a, Word: Unsigned> From<&BitSlice<'a, Word>> for BitVector<Word> {
+    fn from(src: &BitSlice<'a, Word>) -> Self { BitVector::from_store(src) }
 }

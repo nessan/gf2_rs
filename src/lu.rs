@@ -3,16 +3,16 @@
 
 // Crate types.
 use crate::{
-    BitMat,
+    BitMatrix,
     BitStore,
-    BitVec,
+    BitVector,
     Unsigned,
 };
 
 #[doc = include_str!("../docs/lu.md")]
 pub struct BitLU<Word: Unsigned = usize> {
     // The matrices L & U packed into a single bit-matrix.
-    LU: BitMat<Word>,
+    LU: BitMatrix<Word>,
 
     // The row swap instructions stored LAPACK style.
     swaps: Vec<usize>,
@@ -42,7 +42,7 @@ impl<Word: Unsigned> BitLU<Word> {
     /// # Examples (checks that `LU = PA` for a random matrix `A`)
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::random(100, 100);
+    /// let A: BitMatrix = BitMatrix::random(100, 100);
     /// let lu: BitLU = BitLU::new(&A);
     /// let L = lu.L();
     /// let U = lu.U();
@@ -52,7 +52,7 @@ impl<Word: Unsigned> BitLU<Word> {
     /// assert_eq!(PA, LU);
     /// ```
     #[must_use]
-    pub fn new(A: &BitMat<Word>) -> Self {
+    pub fn new(A: &BitMatrix<Word>) -> Self {
         assert!(A.is_square(), "Bit-matrix must be square");
 
         // Set things up
@@ -105,7 +105,7 @@ impl<Word: Unsigned> BitLU<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::left_rotation(100, 1);
+    /// let A: BitMatrix = BitMatrix::left_rotation(100, 1);
     /// let lu: BitLU = BitLU::new(&A);
     /// assert_eq!(lu.rank(), 100);
     /// ```
@@ -126,18 +126,18 @@ impl<Word: Unsigned> BitLU<Word> {
     /// Returns a copy of `L` (unit lower triangular) as a full independent bit-matrix.
     #[inline]
     #[must_use]
-    pub fn L(&self) -> BitMat<Word> { self.LU.unit_lower() }
+    pub fn L(&self) -> BitMatrix<Word> { self.LU.unit_lower() }
 
     /// Returns a copy of `U` (upper triangular) as a full independent bit-matrix.
     #[inline]
     #[must_use]
-    pub fn U(&self) -> BitMat<Word> { self.LU.upper() }
+    pub fn U(&self) -> BitMatrix<Word> { self.LU.upper() }
 
     /// Returns a copy of `P` (the permutation matrix) as a full independent bit-matrix.
     #[inline]
     #[must_use]
-    pub fn P(&self) -> BitMat<Word> {
-        let mut P = BitMat::identity(self.LU.rows());
+    pub fn P(&self) -> BitMatrix<Word> {
+        let mut P = BitMatrix::identity(self.LU.rows());
         for i in 0..self.LU.rows() {
             P.swap_rows(i, self.swaps[i]);
         }
@@ -191,7 +191,7 @@ impl<Word: Unsigned> BitLU<Word> {
     ///
     /// # Panics
     /// Panics if the bit-matrix `B` has a different number of rows than the number of row swap instructions.
-    pub fn permute_matrix(&self, B: &mut BitMat<Word>) {
+    pub fn permute_matrix(&self, B: &mut BitMatrix<Word>) {
         assert_eq!(
             B.rows(),
             self.swaps.len(),
@@ -208,7 +208,7 @@ impl<Word: Unsigned> BitLU<Word> {
     ///
     /// # Panics
     /// Panics if the bit-vector `b` has a different number of elements than the number of row swap instructions.
-    pub fn permute_vector(&self, b: &mut BitVec<Word>) {
+    pub fn permute_vector(&self, b: &mut BitVector<Word>) {
         assert_eq!(
             b.len(),
             self.swaps.len(),
@@ -231,14 +231,14 @@ impl<Word: Unsigned> BitLU<Word> {
     /// ```
     /// use gf2::*;
     /// let n = 100;
-    /// let mut A: BitMat = BitMat::left_rotation(n, 1);
+    /// let mut A: BitMatrix = BitMatrix::left_rotation(n, 1);
     /// let mut lu: BitLU = BitLU::new(&A);
-    /// let b: gf2::BitVec = gf2::BitVec::random(n);
+    /// let b: gf2::BitVector = gf2::BitVector::random(n);
     /// let x = lu.x(&b).unwrap();
     /// assert_eq!(&A * &x, b);
     /// ```
     #[must_use]
-    pub fn x(&self, b: &BitVec<Word>) -> Option<BitVec<Word>> {
+    pub fn x(&self, b: &BitVector<Word>) -> Option<BitVector<Word>> {
         let n = self.LU.rows();
         assert_eq!(b.len(), n, "Bit-vector has {} elements but the matrix has {} rows", b.len(), n);
         if self.is_singular() {
@@ -280,14 +280,14 @@ impl<Word: Unsigned> BitLU<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::left_rotation(100, 5);
-    /// let B: BitMat = BitMat::random(100, 12);
+    /// let A: BitMatrix = BitMatrix::left_rotation(100, 5);
+    /// let B: BitMatrix = BitMatrix::random(100, 12);
     /// let lu: BitLU = BitLU::new(&A);
     /// let X = lu.X(&B).unwrap();
     /// assert_eq!(&A * &X, B);
     /// ```
     #[must_use]
-    pub fn X(&self, B: &BitMat<Word>) -> Option<BitMat<Word>> {
+    pub fn X(&self, B: &BitMatrix<Word>) -> Option<BitMatrix<Word>> {
         let n = self.LU.rows();
         assert_eq!(B.rows(), n, "Right-hand side has {} rows but the matrix has {} rows", B.rows(), n);
 
@@ -329,16 +329,16 @@ impl<Word: Unsigned> BitLU<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::left_rotation(100, 1);
-    /// let A_inv: BitMat = BitLU::new(&A).inverse().unwrap();
-    /// assert_eq!(A_inv, BitMat::right_rotation(100, 1));
+    /// let A: BitMatrix = BitMatrix::left_rotation(100, 1);
+    /// let A_inv: BitMatrix = BitLU::new(&A).inverse().unwrap();
+    /// assert_eq!(A_inv, BitMatrix::right_rotation(100, 1));
     /// ```
     #[must_use]
-    pub fn inverse(&self) -> Option<BitMat<Word>> {
+    pub fn inverse(&self) -> Option<BitMatrix<Word>> {
         if self.is_singular() {
             return None;
         }
-        let B: BitMat<Word> = BitMat::identity(self.LU.rows());
+        let B: BitMatrix<Word> = BitMatrix::identity(self.LU.rows());
         self.X(&B)
     }
 }

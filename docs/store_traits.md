@@ -4,11 +4,11 @@
 
 There are three vector-like types in this library:
 
-| Type            | Description                           |
-| --------------- | ------------------------------------- |
-| `gf2::BitArray` | Fixed-size bit-vectors.               |
-| `gf2::BitVec`   | Dynamically sized bit-vectors.        |
-| `gf2::BitSlice` | A non-owning view of contiguous bits. |
+| Type             | Description                           |
+| ---------------- | ------------------------------------- |
+| `gf2::BitArray`  | Fixed-size bit-vectors.               |
+| `gf2::BitVector` | Dynamically sized bit-vectors.        |
+| `gf2::BitSlice`  | A non-owning view of contiguous bits. |
 
 These types have a large number of methods in common, which they inherit from the [`BitStore`] trait that they all implement.
 
@@ -35,7 +35,7 @@ The simplest case is where a foreign trait acts on a single bit-store type:
 - `Shr`
 
 Our `impl_unary_traits!` macro implements these foreign traits for any concrete _individual_ bit-store type.
-For example, we can invoke `impl_unary_traits!(BitVec)` to implement all these traits for the `BitVec` type.
+For example, we can invoke `impl_unary_traits!(BitVector)` to implement all these traits for the `BitVector` type.
 
 ## Foreign Traits for Pairs of Bit-Stores
 
@@ -55,7 +55,7 @@ Other foreign traits act on _pairs_ of bit-store types:
 - `Mul`
 
 Our `impl_binary_traits!` macro implements these foreign traits for any concrete _pair_ of bit-store types.
-For example, we can invoke `impl_binary_traits!(BitVec, BitSlice)` to implement all these traits for the `BitVec` type getting operations with a `BitSlice` type.
+For example, we can invoke `impl_binary_traits!(BitVector, BitSlice)` to implement all these traits for the `BitVector` type getting operations with a `BitSlice` type.
 
 ## The Macros
 
@@ -63,7 +63,7 @@ The macros are lengthy but straightforward, with a single meaningful match arm.
 
 The one twist is that while all of our bit-store types have a generic `Word: Unsigned` parameter, some types have an extra generic parameter (a lifetime for `BitSlice`, and a `const N: usize` for `BitArray`).
 
-- `BitVec<Word>` has a single generic parameter.
+- `BitVector<Word>` has a single generic parameter.
 - `BitSlice<'a, Word>` has two generic parameters, the first of which is a lifetime.
 - `BitArray<const N, Word>` has two generic parameters, the first of which is `const usize`.
 

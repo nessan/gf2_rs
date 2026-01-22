@@ -10,7 +10,7 @@ use std::io::Write;
 use utilities_rs::Stopwatch;
 
 fn main() {
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
 
     // Number of trials to run & how often to print progress.
     let n_trials = 1_000;

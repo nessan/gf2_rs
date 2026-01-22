@@ -1,4 +1,4 @@
-/// Compare the naive `reduce` method with the optimized one for `BitVec`
+/// Compare the naive `reduce` method with the optimized one for `BitVector`
 /// Run in release mode for realistic timings.
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
@@ -10,7 +10,7 @@ use rand::prelude::*;
 use std::io::Write;
 
 fn main() {
-    type BP = BitPoly<u8>;
+    type BP = BitPolynomial<u8>;
 
     // Number of trials to run & how often to print progress.
     let n_trials = 1_000;
@@ -42,7 +42,7 @@ fn main() {
         // Check that the two implementations agree.
         if reduce_naive != reduce_fast {
             println!("MISMATCH FOR TRIAL: {n}");
-            println!("BitPoly (degree {}):      {}", bp.degree(), bp.to_string());
+            println!("BitPolynomial (degree {}):      {}", bp.degree(), bp.to_string());
             println!("Naive reduction (degree {}): {}", reduce_naive.degree(), reduce_naive.to_string());
             println!("Fast reduction (degree {}):  {}", reduce_fast.degree(), reduce_fast.to_string());
             println!("EXITING ...");

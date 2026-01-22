@@ -20,7 +20,7 @@ locations of those entries as some form of vector.
 You can construct a `BitLU` object from any square bit-matrix `A` either by:
 
 - calling the [`BitLU::new`] method or
-- using the [`BitMat::lu_decomposition`] directly on the bit-matrix.
+- using the [`BitMatrix::lu_decomposition`] directly on the bit-matrix.
 
 The decomposition always works even if `A` is singular, but some of the other `BitLU` methods will not.
 
@@ -86,7 +86,7 @@ In the second case, each column of the bit-matrix `B` is considered a separate r
 Once you have the [LU decomposition] of `A`, it is easy to solve systems like these.
 If `A` is `n x n,` each system solution takes just `O(n^2)` operations.
 
-These methods return an [`Option`] wrapping a [`BitVec`] or a [`BitMat`] or [`None`] if `A` is singular.
+These methods return an [`Option`] wrapping a [`BitVector`] or a [`BitMatrix`] or [`None`] if `A` is singular.
 You can check for singularity by first calling the [`BitLU::is_singular`] method.
 
 ### Panics
@@ -100,15 +100,15 @@ They could instead return a [`None`], but a dimension mismatch is likely an indi
 | ------------------ | --------------------------------------------------------------------- |
 | [`BitLU::inverse`] | Returns the inverse of the matrix `A` or [`None`] if `A` is singular. |
 
-The inverse is returned as a new `BitMat` object wrapped in an [`Option`].
+The inverse is returned as a new `BitMatrix` object wrapped in an [`Option`].
 
 ## Example
 
 ```rs
 use gf2::*;
-let mat: BitMat = BitMat::right_rotation(100, 5);
-let inv: BitMat = BitLU::new(&mat).inverse().unwrap();
-assert_eq!(inv, BitMat::left_rotation(100, 5));
+let mat: BitMatrix = BitMatrix::right_rotation(100, 5);
+let inv: BitMatrix = BitLU::new(&mat).inverse().unwrap();
+assert_eq!(inv, BitMatrix::left_rotation(100, 5));
 println!("Confirmed that the inverse of a right rotation is a left rotation.");
 ```
 

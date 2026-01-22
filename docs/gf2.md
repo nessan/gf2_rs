@@ -42,13 +42,13 @@ Moreover, these operations are highly optimised in modern CPUs, enabling fast co
 
 The crate provides the following vector-like types --- _bit-stores_:
 
-| Type         | Description                                                                       |
-| ------------ | --------------------------------------------------------------------------------- |
-| [`BitArray`] | A _bit-set_ --- fixed-size vector of bits (this requires the `unstable` feature). |
-| [`BitVec`]   | A _bit-vector_ --- dynamically-sized vector of bits.                              |
-| [`BitSlice`] | A _bit-slice_ --- non-owning view into contiguous ranges of bits.                 |
+| Type          | Description                                                                       |
+| ------------- | --------------------------------------------------------------------------------- |
+| [`BitArray`]  | A _bit-set_ --- fixed-size vector of bits (this requires the `unstable` feature). |
+| [`BitVector`] | A _bit-vector_ --- dynamically-sized vector of bits.                              |
+| [`BitSlice`]  | A _bit-slice_ --- non-owning view into contiguous ranges of bits.                 |
 
-The [`BitArray`], [`BitVec`], and [`BitSlice`] types have _many_ methods in common, and they all satisfy the [`BitStore`] trait, which provides a rich set of associated methods for manipulating collections of bits. The methods include bit accessors, mutators, fills, queries, stringification methods, bit-wise operators, arithmetic operators, and more.
+The [`BitArray`], [`BitVector`], and [`BitSlice`] types have _many_ methods in common, and they all satisfy the [`BitStore`] trait, which provides a rich set of associated methods for manipulating collections of bits. The methods include bit accessors, mutators, fills, queries, stringification methods, bit-wise operators, arithmetic operators, and more.
 
 There are also various iterator types for iterating over all bits, set bits, unset bits, and underlying words in any bit-store.
 
@@ -61,8 +61,8 @@ There are also various iterator types for iterating over all bits, set bits, uns
 
 ## Bit-Polynomials
 
-The [`BitPoly`] type represents polynomials over GF(2) --- _bit-polynomials_.
-The coefficients are stored as a [`BitVec`].
+The [`BitPolynomial`] type represents polynomials over GF(2) --- _bit-polynomials_.
+The coefficients are stored as a [`BitVector`].
 
 The type has methods for polynomial arithmetic (addition, multiplication, etc.)
 
@@ -71,13 +71,13 @@ This is useful for computing large jumps and parallelising simulations for some 
 
 ## Bit-Matrices
 
-The [`BitMat`] type is a dynamically-sized matrix of bits— _bit-matrices_.
+The [`BitMatrix`] type is a dynamically-sized matrix of bits— _bit-matrices_.
 
-| Type         | Description                                                                |
-| ------------ | -------------------------------------------------------------------------- |
-| [`BitMat`]   | A _bit-matrix_ --- dynamically-sized matrix of bits.                       |
-| [`BitGauss`] | A Gaussian elimination solver for systems of linear equations over [GF(2)] |
-| [`BitLU`]    | Provides the `LU` decomposition for bit-matrices.                          |
+| Type          | Description                                                                |
+| ------------- | -------------------------------------------------------------------------- |
+| [`BitMatrix`] | A _bit-matrix_ --- dynamically-sized matrix of bits.                       |
+| [`BitGauss`]  | A Gaussian elimination solver for systems of linear equations over [GF(2)] |
+| [`BitLU`]     | Provides the `LU` decomposition for bit-matrices.                          |
 
 There are methods for all the usual interactions between bit-matrices and bit-vectors.
 
@@ -89,7 +89,7 @@ Here is a simple example of a program that uses `gf2`:
 
 ```rs
 use gf2::*;
-let m: BitMat = BitMat::random(6, 6);
+let m: BitMatrix = BitMatrix::random(6, 6);
 let c = m.characteristic_polynomial();
 println!("The matrix m:\n{}", m);
 println!("has the characteristic polynomial: c(x) = {}.", c);
@@ -146,7 +146,7 @@ Drop the `gf2` crate somewhere convenient, and you're good to go.
 
 ## Unstable Features
 
-Some APIs (notably the [`BitArray`] type, and [`BitPoly`]'s function-call syntax `p(x)`/`p(M)`) require a few features that Rust considers "unstable" at the time of writing (though the features have been available for a very long time).
+Some APIs (notably the [`BitArray`] type, and [`BitPolynomial`]'s function-call syntax `p(x)`/`p(M)`) require a few features that Rust considers "unstable" at the time of writing (though the features have been available for a very long time).
 
 To use those APIs you can use either use stable Rust with the environment variable `RUSTC_BOOTSTRAP` set to `1` or use the nightly Rust compiler.
 
@@ -159,7 +159,7 @@ features = ["unstable"]
 
 or, on the command line, by adding the `--features unstable` flag to `cargo` builds.
 
-If the `unstable` feature is not enabled, the `BitArray` type will not be available, and the `BitPoly` type will not support the function-call syntax `p(x)`/`p(M)`. Instead, you can use the methods `eval_bool`/`eval_matrix` to evaluate polynomials at a bit-vector or bit-matrix argument.
+If the `unstable` feature is not enabled, the `BitArray` type will not be available, and the `BitPolynomial` type will not support the function-call syntax `p(x)`/`p(M)`. Instead, you can use the methods `eval_bool`/`eval_matrix` to evaluate polynomials at a bit-vector or bit-matrix argument.
 
 ## C++ Version
 

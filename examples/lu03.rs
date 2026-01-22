@@ -12,7 +12,7 @@ use gf2::*;
 use std::io::Write;
 
 fn main() {
-    type Mat = BitMat<u8>;
+    type Mat = BitMatrix<u8>;
 
     let n = 200;
     let n_trials = 500;

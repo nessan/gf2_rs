@@ -1,13 +1,13 @@
-//! [`BitMat`] is a matrix over GF(2) --- a _bit-matrix_.
+//! [`BitMatrix`] is a matrix over GF(2) --- a _bit-matrix_.
 
 // Crate imports.
 use crate::{
     BitGauss,
     BitLU,
-    BitPoly,
+    BitPolynomial,
     BitSlice,
     BitStore,
-    BitVec,
+    BitVector,
     Unsigned,
     rng,
 };
@@ -44,20 +44,20 @@ use std::{
 
 #[doc = include_str!("../docs/mat.md")]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
-pub struct BitMat<Word: Unsigned = usize> {
+pub struct BitMatrix<Word: Unsigned = usize> {
     /// The rows of the bit-matrix stored as a vector of bit-vectors.
-    m_rows: Vec<BitVec<Word>>,
+    m_rows: Vec<BitVector<Word>>,
 }
 
 /// Constructors for general rectangular `r x c` bit-matrices.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// The default constructor creates an empty bit-matrix. <br>
     /// No capacity is reserved until elements are added.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.rows(), 0);
     /// assert_eq!(m.cols(), 0);
     /// ```
@@ -70,19 +70,19 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::zeros(3, 2);
+    /// let m: BitMatrix = BitMatrix::zeros(3, 2);
     /// assert_eq!(m.to_compact_binary_string(), "00 00 00");
     /// ```
     #[must_use]
     #[inline]
-    pub fn zeros(r: usize, c: usize) -> Self { Self { m_rows: vec![BitVec::zeros(c); r] } }
+    pub fn zeros(r: usize, c: usize) -> Self { Self { m_rows: vec![BitVector::zeros(c); r] } }
 
     /// Constructs a square bit-matrix with `n` rows and columns, initializing all elements to zero.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::square(3);
+    /// let m: BitMatrix = BitMatrix::square(3);
     /// assert_eq!(m.to_compact_binary_string(), "000 000 000");
     /// ```
     #[must_use]
@@ -94,24 +94,24 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::ones(3, 2);
+    /// let m: BitMatrix = BitMatrix::ones(3, 2);
     /// assert_eq!(m.to_compact_binary_string(), "11 11 11");
     /// ```
     #[must_use]
     #[inline]
-    pub fn ones(r: usize, c: usize) -> Self { Self { m_rows: vec![BitVec::ones(c); r] } }
+    pub fn ones(r: usize, c: usize) -> Self { Self { m_rows: vec![BitVector::ones(c); r] } }
 
     /// Constructs a bit-matrix with an alternating pattern of `1`s and `0`s.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::alternating(3, 5);
+    /// let m: BitMatrix = BitMatrix::alternating(3, 5);
     /// assert_eq!(m.to_compact_binary_string(), "10101 01010 10101");
     /// ```
     #[must_use]
     pub fn alternating(r: usize, c: usize) -> Self {
-        let mut result = Self { m_rows: vec![BitVec::alternating(c); r] };
+        let mut result = Self { m_rows: vec![BitVector::alternating(c); r] };
         // Flip every other row.
         for i in (1..r).step_by(2) {
             result.m_rows[i].flip_all();
@@ -126,13 +126,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let a: BitVec = BitVec::from_binary_string("101").unwrap();
-    /// let b: BitVec = BitVec::from_binary_string("110").unwrap();
-    /// let m: BitMat = BitMat::from_outer_product(&a, &b);
+    /// let a: BitVector = BitVector::from_binary_string("101").unwrap();
+    /// let b: BitVector = BitVector::from_binary_string("110").unwrap();
+    /// let m: BitMatrix = BitMatrix::from_outer_product(&a, &b);
     /// assert_eq!(m.to_compact_binary_string(), "110 000 110");
     /// ```
     #[must_use]
-    pub fn from_outer_product(a: &BitVec<Word>, b: &BitVec<Word>) -> Self {
+    pub fn from_outer_product(a: &BitVector<Word>, b: &BitVector<Word>) -> Self {
         let r = a.len();
         let c = b.len();
         let mut result = Self::zeros(r, c);
@@ -151,13 +151,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let a: BitVec = BitVec::from_binary_string("101").unwrap();
-    /// let b: BitVec = BitVec::from_binary_string("110").unwrap();
-    /// let m: BitMat = BitMat::from_outer_sum(&a, &b);
+    /// let a: BitVector = BitVector::from_binary_string("101").unwrap();
+    /// let b: BitVector = BitVector::from_binary_string("110").unwrap();
+    /// let m: BitMatrix = BitMatrix::from_outer_sum(&a, &b);
     /// assert_eq!(m.to_compact_binary_string(), "001 110 001");
     /// ```
     #[must_use]
-    pub fn from_outer_sum(a: &BitVec<Word>, b: &BitVec<Word>) -> Self {
+    pub fn from_outer_sum(a: &BitVector<Word>, b: &BitVector<Word>) -> Self {
         let r = a.len();
         let c = b.len();
         let mut result = Self::zeros(r, c);
@@ -175,7 +175,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::from_fn(3, 2, |i, _| i % 2 == 0);
+    /// let m: BitMatrix = BitMatrix::from_fn(3, 2, |i, _| i % 2 == 0);
     /// assert_eq!(m.to_compact_binary_string(), "11 00 11");
     /// ```
     #[must_use]
@@ -193,7 +193,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Constructors for general rectangular `r x c` bit-matrices with random fills.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Constructs a random bit-matrix with `r` rows and `c` columns where each element is set with probability `p`, and
     /// the RNG is seeded to `seed`. A seed of `0` indicates we should randomly seed the RNG.
     ///
@@ -204,10 +204,10 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let M0: BitMat = BitMat::random_biased_seeded(50, 50, 1.2, 42); // All bits set
+    /// let M0: BitMatrix = BitMatrix::random_biased_seeded(50, 50, 1.2, 42); // All bits set
     /// assert_eq!(M0.count_ones(), 2500);
-    /// let M1: BitMat = BitMat::random_biased_seeded(50, 50, 0.75, 42);
-    /// let M2: BitMat = BitMat::random_biased_seeded(50, 50, 0.75, 42);
+    /// let M1: BitMatrix = BitMatrix::random_biased_seeded(50, 50, 0.75, 42);
+    /// let M2: BitMatrix = BitMatrix::random_biased_seeded(50, 50, 0.75, 42);
     /// assert_eq!(M1, M2);
     /// ```
     #[must_use]
@@ -263,7 +263,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::random(3, 5);
+    /// let m: BitMatrix = BitMatrix::random(3, 5);
     /// assert_eq!(m.rows(), 3);
     /// assert_eq!(m.cols(), 5);
     /// ```
@@ -279,8 +279,8 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::random_seeded(3, 5, 42);
-    /// let m2: BitMat = BitMat::random_seeded(3, 5, 42);
+    /// let m1: BitMatrix = BitMatrix::random_seeded(3, 5, 42);
+    /// let m2: BitMatrix = BitMatrix::random_seeded(3, 5, 42);
     /// assert_eq!(m1, m2);
     /// ```
     #[must_use]
@@ -296,7 +296,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::random_biased(3, 5, 0.3);
+    /// let m: BitMatrix = BitMatrix::random_biased(3, 5, 0.3);
     /// assert_eq!(m.rows(), 3);
     /// assert_eq!(m.cols(), 5);
     /// ```
@@ -305,13 +305,13 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Constructors for some "special" square bit-matrices.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Constructs the n x n zero matrix.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::zeros(3, 3);
+    /// let m: BitMatrix = BitMatrix::zeros(3, 3);
     /// assert_eq!(m.to_compact_binary_string(), "000 000 000");
     /// ```
     #[must_use]
@@ -323,7 +323,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(4);
+    /// let m: BitMatrix = BitMatrix::identity(4);
     /// assert_eq!(m.to_compact_binary_string(), "1000 0100 0010 0001");
     /// ```
     #[must_use]
@@ -343,8 +343,8 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::left_shift(5, 2);
-    /// let v: BitVec = BitVec::ones(5);
+    /// let m: BitMatrix = BitMatrix::left_shift(5, 2);
+    /// let v: BitVector = BitVector::ones(5);
     /// assert_eq!((&m * &v).to_string(), "11100");
     /// ```
     #[must_use]
@@ -361,8 +361,8 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::right_shift(5, 2);
-    /// let v: BitVec = BitVec::ones(5);
+    /// let m: BitMatrix = BitMatrix::right_shift(5, 2);
+    /// let v: BitVector = BitVector::ones(5);
     /// assert_eq!((&m * &v).to_string(), "00111");
     /// ```
     #[must_use]
@@ -379,8 +379,8 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::left_rotation(5, 2);
-    /// let v: BitVec = BitVec::from_binary_string("11100").unwrap();
+    /// let m: BitMatrix = BitMatrix::left_rotation(5, 2);
+    /// let v: BitVector = BitVector::from_binary_string("11100").unwrap();
     /// assert_eq!((&m * &v).to_string(), "00111");
     /// ```
     #[must_use]
@@ -400,8 +400,8 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::right_rotation(5, 2);
-    /// let v: BitVec = BitVec::from_binary_string("11100").unwrap();
+    /// let m: BitMatrix = BitMatrix::right_rotation(5, 2);
+    /// let v: BitVector = BitVector::from_binary_string("11100").unwrap();
     /// assert_eq!((&m * &v).to_string(), "10011");
     /// ```
     #[must_use]
@@ -422,8 +422,8 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let top_row: BitVec = BitVec::from_binary_string("10101").unwrap();
-    /// let m: BitMat = BitMat::companion(&top_row);
+    /// let top_row: BitVector = BitVector::from_binary_string("10101").unwrap();
+    /// let m: BitMatrix = BitMatrix::companion(&top_row);
     /// assert_eq!(m.to_compact_binary_string(), "10101 10000 01000 00100 00010");
     /// ```
     #[must_use]
@@ -440,7 +440,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Bit-matrix constructors that can fail.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Attempts to construct a bit-matrix by reshaping a bit-vector that is assumed to be a sequence of `r` rows.
     ///
     /// On success, the output bit-matrix will have `r` rows and `c` columns where `c` is the integer `src.len() / r`.
@@ -449,16 +449,16 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::ones(15);
-    /// let m: BitMat = BitMat::from_vector_of_rows(&v, 3).unwrap();
+    /// let v: BitVector = BitVector::ones(15);
+    /// let m: BitMatrix = BitMatrix::from_vector_of_rows(&v, 3).unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "11111 11111 11111");
-    /// let m: BitMat = BitMat::from_vector_of_rows(&v, 5).unwrap();
+    /// let m: BitMatrix = BitMatrix::from_vector_of_rows(&v, 5).unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "111 111 111 111 111");
-    /// let m: BitMat = BitMat::from_vector_of_rows(&v, 15).unwrap();
+    /// let m: BitMatrix = BitMatrix::from_vector_of_rows(&v, 15).unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1");
     /// ```
     #[must_use]
-    pub fn from_vector_of_rows(src: &BitVec<Word>, r: usize) -> Option<Self> {
+    pub fn from_vector_of_rows(src: &BitVector<Word>, r: usize) -> Option<Self> {
         // Edge case:
         if src.len() == 0 {
             return Some(Self::new());
@@ -487,16 +487,16 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::ones(15);
-    /// let m: BitMat = BitMat::from_vector_of_cols(&v, 3).unwrap();
+    /// let v: BitVector = BitVector::ones(15);
+    /// let m: BitMatrix = BitMatrix::from_vector_of_cols(&v, 3).unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "111 111 111 111 111");
-    /// let m: BitMat = BitMat::from_vector_of_cols(&v, 5).unwrap();
+    /// let m: BitMatrix = BitMatrix::from_vector_of_cols(&v, 5).unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "11111 11111 11111");
-    /// let m: BitMat = BitMat::from_vector_of_cols(&v, 15).unwrap();
+    /// let m: BitMatrix = BitMatrix::from_vector_of_cols(&v, 15).unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "111111111111111");
     /// ```
     #[must_use]
-    pub fn from_vector_of_cols(src: &BitVec<Word>, c: usize) -> Option<Self> {
+    pub fn from_vector_of_cols(src: &BitVector<Word>, c: usize) -> Option<Self> {
         // Edge case:
         if src.len() == 0 {
             return Some(Self::new());
@@ -535,11 +535,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::from_string("111   111\n111").unwrap();
+    /// let m: BitMatrix = BitMatrix::from_string("111   111\n111").unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "111 111 111");
-    /// let m: BitMat = BitMat::from_string("0XAA; 0b1111_0000").unwrap();
+    /// let m: BitMatrix = BitMatrix::from_string("0XAA; 0b1111_0000").unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "10101010 11110000");
-    /// let m: BitMat = BitMat::from_string("0x7.8 000").unwrap();
+    /// let m: BitMatrix = BitMatrix::from_string("0x7.8 000").unwrap();
     /// assert_eq!(m.to_compact_binary_string(), "111 000");
     /// ```
     #[must_use]
@@ -558,11 +558,11 @@ impl<Word: Unsigned> BitMat<Word> {
         let mut n_cols = 0;
 
         // If all goes well we need a bit-matrix to return at the end.
-        let mut result = BitMat::new();
+        let mut result = BitMatrix::new();
 
         // Proceed through the strings representing the rows of the matrix.
         for (i, row_string) in row_strings.iter().enumerate() {
-            if let Some(row) = BitVec::<Word>::from_string(row_string) {
+            if let Some(row) = BitVector::<Word>::from_string(row_string) {
                 if i == 0 {
                     // First row sets the number of columns.
                     n_cols = row.len();
@@ -590,7 +590,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Bit-matrix core queries.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns the number of rows in the bit-matrix.
     #[must_use]
     #[inline]
@@ -613,7 +613,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods for checking the state of a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns `true` if any element of the bit-matrix is set.
     ///
     /// # Note
@@ -622,7 +622,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// assert_eq!(m.any(), false);
     /// m.set(0, 0, true);
     /// assert_eq!(m.any(), true);
@@ -641,7 +641,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// assert_eq!(m.all(), false);
     /// m.set_all(true);
     /// assert_eq!(m.all(), true);
@@ -660,7 +660,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// assert_eq!(m.none(), true);
     /// m.set_all(true);
     /// assert_eq!(m.none(), false);
@@ -673,7 +673,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Is this bit-matrix something special?
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns `true` if the bit-matrix is square.
     ///
     /// # Note
@@ -682,7 +682,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::new();
+    /// let mut m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.is_square(), false);
     /// m.resize(3, 3);
     /// assert_eq!(m.is_square(), true);
@@ -698,13 +698,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.is_zero(), false);
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.is_zero(), false);
-    /// let m: BitMat = BitMat::zeros(3, 3);
+    /// let m: BitMatrix = BitMatrix::zeros(3, 3);
     /// assert_eq!(m.is_zero(), true);
-    /// let m: BitMat = BitMat::zeros(3, 2);
+    /// let m: BitMatrix = BitMatrix::zeros(3, 2);
     /// assert_eq!(m.is_zero(), false);
     /// ```
     #[must_use]
@@ -716,7 +716,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.is_identity(), true);
     /// ```
     #[must_use]
@@ -739,7 +739,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::square(3);
+    /// let m: BitMatrix = BitMatrix::square(3);
     /// assert_eq!(m.is_symmetric(), true);
     /// ```
     #[must_use]
@@ -759,13 +759,13 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Set and unset bit counts for a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns the number of ones in the bit-matrix.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.count_ones(), 3);
     /// ```
     #[must_use]
@@ -777,7 +777,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.count_zeros(), 6);
     /// ```
     #[must_use]
@@ -792,7 +792,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.count_ones_on_diagonal(), 3);
     /// ```
     #[must_use]
@@ -815,9 +815,9 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.trace(), true);
-    /// let m: BitMat = BitMat::identity(4);
+    /// let m: BitMatrix = BitMatrix::identity(4);
     /// assert_eq!(m.trace(), false);
     /// ```
     #[must_use]
@@ -826,7 +826,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods for accessing and setting individual elements of a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns `true` if the element at row `r` and column `c` is set.
     ///
     /// # Panics
@@ -835,7 +835,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// assert_eq!(m.get(0, 0), false);
     /// m.set(0, 0, true);
     /// assert_eq!(m.get(0, 0), true);
@@ -856,7 +856,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// m.set(0, 0, true);
     /// assert_eq!(m.get(0, 0), true);
     /// ```
@@ -876,7 +876,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// m.flip(0, 0);
     /// assert_eq!(m.get(0, 0), true);
     /// ```
@@ -890,7 +890,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods for accessing and setting rows of a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns a row `i` of the bit-matrix as a reference to a bit-vector -- this is cheap.
     ///
     /// # Note
@@ -902,14 +902,14 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.row(0).to_string(), "100");
     /// assert_eq!(m.row(1).to_string(), "010");
     /// assert_eq!(m.row(2).to_string(), "001");
     /// ```
     #[must_use]
     #[inline]
-    pub fn row(&self, i: usize) -> &BitVec<Word> {
+    pub fn row(&self, i: usize) -> &BitVector<Word> {
         debug_assert!(i < self.rows(), "Row index {i} out of bounds [0, {})", self.rows());
         &self.m_rows[i]
     }
@@ -925,13 +925,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
     /// m.row_mut(0).set(1, true);
     /// assert_eq!(m.to_compact_binary_string(), "110 010 001");
     /// ```
     #[must_use]
     #[inline]
-    pub fn row_mut(&mut self, i: usize) -> &mut BitVec<Word> {
+    pub fn row_mut(&mut self, i: usize) -> &mut BitVector<Word> {
         debug_assert!(i < self.rows(), "Row index {i} out of bounds [0, {})", self.rows());
         &mut self.m_rows[i]
     }
@@ -947,8 +947,8 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
-    /// let src: BitVec = BitVec::ones(3);
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
+    /// let src: BitVector = BitVector::ones(3);
     /// m.set_row(0, &src);
     /// assert_eq!(m.to_compact_binary_string(), "111 010 001");
     /// ```
@@ -968,7 +968,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
     /// m.flip_row(0);
     /// assert_eq!(m.to_compact_binary_string(), "011 010 001");
     /// ```
@@ -981,8 +981,8 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Method to access the columns of a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
-    /// Returns a **clone** of the elements in column `c` from the bit-matrix as an independent [`BitVec`].
+impl<Word: Unsigned> BitMatrix<Word> {
+    /// Returns a **clone** of the elements in column `c` from the bit-matrix as an independent [`BitVector`].
     ///
     /// # Note
     /// - Matrices are stored by rows and there is no cheap slice style access to the matrix columns.
@@ -994,7 +994,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// let mut col = m.col(1);
     /// assert_eq!(col.to_string(), "010");
     /// col.set(0, true);
@@ -1003,9 +1003,9 @@ impl<Word: Unsigned> BitMat<Word> {
     /// assert_eq!(m.to_compact_binary_string(), "100 010 001");
     /// ```
     #[must_use]
-    pub fn col(&self, c: usize) -> BitVec<Word> {
+    pub fn col(&self, c: usize) -> BitVector<Word> {
         debug_assert!(c < self.cols(), "Column {c} is not in bounds [0, {})", self.cols());
-        let mut result = BitVec::zeros(self.rows());
+        let mut result = BitVector::zeros(self.rows());
         for r in 0..self.rows() {
             if self.get(r, c) {
                 result.set(r, true);
@@ -1016,13 +1016,13 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods to change the state of all the elements of a bit-matrix at once.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Sets all elements of the bit-matrix to the boolean value `v` and returns a reference to the matrix.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// m.set_all(true);
     /// assert_eq!(m.all(), true);
     /// ```
@@ -1038,7 +1038,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// assert_eq!(m.all(), false);
     /// m.flip_all();
     /// assert_eq!(m.all(), true);
@@ -1059,21 +1059,21 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let M: gf2::BitMat = gf2::BitMat::ones(3, 3);
+    /// let M: gf2::BitMatrix = gf2::BitMatrix::ones(3, 3);
     /// let N = M.flipped();
     /// assert_eq!(M.to_compact_binary_string(), "111 111 111");
     /// assert_eq!(N.to_compact_binary_string(), "000 000 000");
     /// ```
     #[must_use]
-    pub fn flipped(&self) -> BitMat<Word> {
-        let mut result: BitMat<Word> = self.clone();
+    pub fn flipped(&self) -> BitMatrix<Word> {
+        let mut result: BitMatrix<Word> = self.clone();
         result.flip_all();
         result
     }
 }
 
 /// Methods to change the state of the elements on the diagonals of a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Sets the main diagonal of a square bit-matrix to the boolean value `val`.
     ///
     /// # Panics
@@ -1082,7 +1082,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// m.set_diagonal(true);
     /// for i in 0..3 {
     ///     assert_eq!(m.get(i, i), true);
@@ -1104,7 +1104,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(3);
+    /// let mut m: BitMatrix = BitMatrix::square(3);
     /// m.set_diagonal(true);
     /// for i in 0..3 {
     ///     assert_eq!(m.get(i, i), true);
@@ -1132,7 +1132,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(5);
+    /// let mut m: BitMatrix = BitMatrix::square(5);
     /// m.set_super_diagonal(1, true);
     /// for i in 0..4 {
     ///     assert_eq!(m.get(i, i + 1), true);
@@ -1156,7 +1156,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(5);
+    /// let mut m: BitMatrix = BitMatrix::square(5);
     /// m.set_super_diagonal(1, true);
     /// for i in 0..4 {
     ///     assert_eq!(m.get(i, i + 1), true);
@@ -1184,7 +1184,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(5);
+    /// let mut m: BitMatrix = BitMatrix::square(5);
     /// m.set_sub_diagonal(1, true);
     /// for i in 0..4 {
     ///     assert_eq!(m.get(i + 1, i), true);
@@ -1208,7 +1208,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::square(5);
+    /// let mut m: BitMatrix = BitMatrix::square(5);
     /// m.set_sub_diagonal(1, true);
     /// for i in 0..4 {
     ///     assert_eq!(m.get(i + 1, i), true);
@@ -1228,7 +1228,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Bit-matrix resizing methods.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Resizes the bit-matrix, to have `r` rows and `c` columns, initializing any added elements to zero.
     ///
     /// Note:
@@ -1237,7 +1237,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::new();
+    /// let mut m: BitMatrix = BitMatrix::new();
     /// m.resize(10, 10);
     /// assert_eq!(m.rows(), 10);
     /// assert_eq!(m.cols(), 10);
@@ -1262,13 +1262,13 @@ impl<Word: Unsigned> BitMat<Word> {
             for row in &mut self.m_rows {
                 row.resize(0);
             }
-            self.m_rows.resize(0, BitVec::default());
+            self.m_rows.resize(0, BitVector::default());
             return self;
         }
         let old_cols = self.cols();
 
         // Resize the vector of rows adding new, correct-length, all-zero rows if needed.
-        self.m_rows.resize(r, BitVec::zeros(c));
+        self.m_rows.resize(r, BitVector::zeros(c));
 
         // If necessary, resize each row to the new column count.
         // Any added rows will be no-ops, otherwise any added elements will be initialized to zero.
@@ -1300,7 +1300,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::from_string("111 111 111 111").unwrap();
+    /// let mut m: BitMatrix = BitMatrix::from_string("111 111 111 111").unwrap();
     /// m.make_square(3);
     /// assert_eq!(m.to_compact_binary_string(), "111 111 111");
     /// ```
@@ -1311,7 +1311,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Bit-matrix methods to append/remove rows and columns.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Consumes the input row and appends it to the end of the bit-matrix.
     ///
     /// # Panics
@@ -1320,11 +1320,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
-    /// m.append_row(BitVec::from_string("111").unwrap());
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
+    /// m.append_row(BitVector::from_string("111").unwrap());
     /// assert_eq!(m.to_compact_binary_string(), "100 010 001 111");
     /// ```
-    pub fn append_row(&mut self, row: BitVec<Word>) -> &mut Self {
+    pub fn append_row(&mut self, row: BitVector<Word>) -> &mut Self {
         assert_eq!(row.len(), self.cols(), "Row must have same number of elements as the matrix has columns");
         self.m_rows.push(row);
         self
@@ -1335,11 +1335,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
-    /// assert_eq!(m.remove_row(), Some(BitVec::from_string("001").unwrap()));
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
+    /// assert_eq!(m.remove_row(), Some(BitVector::from_string("001").unwrap()));
     /// assert_eq!(m.to_compact_binary_string(), "100 010");
     /// ```
-    pub fn remove_row(&mut self) -> Option<BitVec<Word>> { self.m_rows.pop() }
+    pub fn remove_row(&mut self) -> Option<BitVector<Word>> { self.m_rows.pop() }
 
     /// Appends the bits from the input column to the right of the bit-matrix.
     ///
@@ -1349,11 +1349,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
-    /// m.append_col(&BitVec::from_string("111").unwrap());
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
+    /// m.append_col(&BitVector::from_string("111").unwrap());
     /// assert_eq!(m.to_compact_binary_string(), "1001 0101 0011");
     /// ```
-    pub fn append_col(&mut self, col: &BitVec<Word>) -> &mut Self {
+    pub fn append_col(&mut self, col: &BitVector<Word>) -> &mut Self {
         assert_eq!(col.len(), self.rows(), "Column must have same number of elements as the matrix has rows");
         for (i, row) in self.m_rows.iter_mut().enumerate() {
             row.push(col[i]);
@@ -1366,11 +1366,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
-    /// assert_eq!(m.remove_col(), Some(BitVec::from_string("001").unwrap()));
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
+    /// assert_eq!(m.remove_col(), Some(BitVector::from_string("001").unwrap()));
     /// assert_eq!(m.to_compact_binary_string(), "10 01 00");
     /// ```
-    pub fn remove_col(&mut self) -> Option<BitVec<Word>> {
+    pub fn remove_col(&mut self) -> Option<BitVector<Word>> {
         if self.is_empty() {
             return None;
         }
@@ -1389,11 +1389,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::ones(3, 3);
-    /// m.append_cols(&BitMat::ones(3, 3));
+    /// let mut m: BitMatrix = BitMatrix::ones(3, 3);
+    /// m.append_cols(&BitMatrix::ones(3, 3));
     /// assert_eq!(m.to_compact_binary_string(), "111111 111111 111111");
     /// ```
-    pub fn append_cols(&mut self, src: &BitMat<Word>) -> &mut Self {
+    pub fn append_cols(&mut self, src: &BitMatrix<Word>) -> &mut Self {
         assert_eq!(src.rows(), self.rows(), "Input matrix must have same number of rows as the matrix");
         for (i, row) in self.m_rows.iter_mut().enumerate() {
             row.append_store(&src.m_rows[i]);
@@ -1406,11 +1406,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::ones(3, 3);
-    /// assert_eq!(m.remove_cols(2), Some(BitMat::ones(3, 2)));
+    /// let mut m: BitMatrix = BitMatrix::ones(3, 3);
+    /// assert_eq!(m.remove_cols(2), Some(BitMatrix::ones(3, 2)));
     /// assert_eq!(m.to_compact_binary_string(), "1 1 1");
     /// ```
-    pub fn remove_cols(&mut self, k: usize) -> Option<BitMat<Word>> {
+    pub fn remove_cols(&mut self, k: usize) -> Option<BitMatrix<Word>> {
         if k > self.cols() {
             return None;
         }
@@ -1427,11 +1427,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::ones(3, 3);
-    /// m.append_rows(BitMat::ones(3, 3));
+    /// let mut m: BitMatrix = BitMatrix::ones(3, 3);
+    /// m.append_rows(BitMatrix::ones(3, 3));
     /// assert_eq!(m.to_compact_binary_string(), "111 111 111 111 111 111");
     /// ```
-    pub fn append_rows(&mut self, src: BitMat<Word>) -> &mut Self {
+    pub fn append_rows(&mut self, src: BitMatrix<Word>) -> &mut Self {
         assert_eq!(src.cols(), self.cols(), "Input matrix must have same number of columns as the matrix");
         self.m_rows.extend(src.m_rows);
         self
@@ -1442,11 +1442,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::ones(3, 3);
-    /// assert_eq!(m.remove_rows(2), Some(BitMat::ones(2, 3)));
+    /// let mut m: BitMatrix = BitMatrix::ones(3, 3);
+    /// assert_eq!(m.remove_rows(2), Some(BitMatrix::ones(2, 3)));
     /// assert_eq!(m.to_compact_binary_string(), "111");
     /// ```
-    pub fn remove_rows(&mut self, k: usize) -> Option<BitMat<Word>> {
+    pub fn remove_rows(&mut self, k: usize) -> Option<BitMatrix<Word>> {
         if k > self.rows() {
             return None;
         }
@@ -1457,7 +1457,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Bit-matrix "elementary operations" (used in various linear algebra algorithms).
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Swaps two rows of a bit-matrix in place.
     ///
     /// # Panics
@@ -1466,7 +1466,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::zeros(3, 3);
+    /// let mut m: BitMatrix = BitMatrix::zeros(3, 3);
     /// m[0].set_all(true);
     /// assert_eq!(m.to_compact_binary_string(), "111 000 000");
     /// m.swap_rows(0, 1);
@@ -1488,7 +1488,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.to_compact_binary_string(), "100 010 001");
     /// m.swap_cols(0, 1);
     /// assert_eq!(m.to_compact_binary_string(), "010 100 001");
@@ -1513,7 +1513,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::zeros(3, 3);
+    /// let mut m: BitMatrix = BitMatrix::zeros(3, 3);
     /// m.add_identity();
     /// assert_eq!(m.to_compact_binary_string(), "100 010 001");
     /// m.add_identity();
@@ -1529,7 +1529,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Bit-matrix transposition methods.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Transposes a square bit-matrix in place.
     ///
     /// # Panics
@@ -1538,7 +1538,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::zero(3);
+    /// let mut m: BitMatrix = BitMatrix::zero(3);
     /// m[0].set_all(true);
     /// assert_eq!(m.to_compact_binary_string(), "111 000 000");
     /// m.transpose();
@@ -1566,7 +1566,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::zeros(3, 2);
+    /// let mut m: BitMatrix = BitMatrix::zeros(3, 2);
     /// m[0].set_all(true);
     /// assert_eq!(m.to_compact_binary_string(), "11 00 00");
     /// let n = m.transposed();
@@ -1576,7 +1576,7 @@ impl<Word: Unsigned> BitMat<Word> {
     pub fn transposed(&self) -> Self {
         let r = self.rows();
         let c = self.cols();
-        let mut result = BitMat::zeros(c, r);
+        let mut result = BitMatrix::zeros(c, r);
         for i in 0..r {
             for j in 0..c {
                 if self.get(i, j) {
@@ -1589,7 +1589,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Sub-matrix cloning/replacing methods.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns an independent *clone* of the sub-matrix from the given row and column ranges.
     ///
     /// # Panics
@@ -1598,7 +1598,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(5);
+    /// let m: BitMatrix = BitMatrix::identity(5);
     /// let sub_m = m.sub_matrix(1..4, 1..4);
     /// assert_eq!(sub_m.to_compact_binary_string(), "100 010 001");
     /// let sub_m = m.sub_matrix(1..1, 1..1);
@@ -1643,7 +1643,7 @@ impl<Word: Unsigned> BitMat<Word> {
         let c = c_end - c_start;
 
         // Create the sub-matrix.
-        let mut result = BitMat::zeros(r, c);
+        let mut result = BitMatrix::zeros(r, c);
         for i in 0..r {
             result.m_rows[i].copy_store(&self.m_rows[i + r_start].slice(c_start..c_end));
         }
@@ -1660,11 +1660,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(5);
-    /// m.replace_sub_matrix(1, 1, &BitMat::ones(3, 3));
+    /// let mut m: BitMatrix = BitMatrix::identity(5);
+    /// m.replace_sub_matrix(1, 1, &BitMatrix::ones(3, 3));
     /// assert_eq!(m.to_compact_binary_string(), "10000 01110 01110 01110 00001");
     /// ```
-    pub fn replace_sub_matrix(&mut self, top: usize, left: usize, src: &BitMat<Word>) -> &mut Self {
+    pub fn replace_sub_matrix(&mut self, top: usize, left: usize, src: &BitMatrix<Word>) -> &mut Self {
         let r = src.rows();
         let c = src.cols();
         assert!(top + r <= self.rows(), "Too many rows for the replacement sub-matrix to fit");
@@ -1677,13 +1677,13 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Triangular sub-matrix methods.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns an independent *clone* of the lower triangular part of the bit-matrix.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::ones(3, 3);
+    /// let m: BitMatrix = BitMatrix::ones(3, 3);
     /// let sub_m = m.lower();
     /// assert_eq!(sub_m.to_compact_binary_string(), "100 110 111");
     /// ```
@@ -1691,7 +1691,7 @@ impl<Word: Unsigned> BitMat<Word> {
     pub fn lower(&self) -> Self {
         // Edge case:
         if self.is_empty() {
-            return BitMat::new();
+            return BitMatrix::new();
         }
 
         // Start with a copy of the bit-matrix.
@@ -1713,7 +1713,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::ones(3, 3);
+    /// let m: BitMatrix = BitMatrix::ones(3, 3);
     /// let sub_m = m.upper();
     /// assert_eq!(sub_m.to_compact_binary_string(), "111 011 001");
     /// ```
@@ -1721,7 +1721,7 @@ impl<Word: Unsigned> BitMat<Word> {
     pub fn upper(&self) -> Self {
         // Edge case:
         if self.is_empty() {
-            return BitMat::new();
+            return BitMatrix::new();
         }
 
         // Start with a copy of the bit-matrix.
@@ -1745,7 +1745,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::ones(3, 3);
+    /// let m: BitMatrix = BitMatrix::ones(3, 3);
     /// let sub_m = m.strictly_lower();
     /// assert_eq!(sub_m.to_compact_binary_string(), "000 100 110");
     /// ```
@@ -1763,7 +1763,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::ones(3, 3);
+    /// let m: BitMatrix = BitMatrix::ones(3, 3);
     /// let sub_m = m.strictly_upper();
     /// assert_eq!(sub_m.to_compact_binary_string(), "011 001 000");
     /// ```
@@ -1781,7 +1781,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::zeros(3, 3);
+    /// let m: BitMatrix = BitMatrix::zeros(3, 3);
     /// let sub_m = m.unit_lower();
     /// assert_eq!(sub_m.to_compact_binary_string(), "100 010 001");
     /// ```
@@ -1799,7 +1799,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::zeros(3, 3);
+    /// let m: BitMatrix = BitMatrix::zeros(3, 3);
     /// let sub_m = m.unit_upper();
     /// assert_eq!(sub_m.to_compact_binary_string(), "100 010 001");
     /// ```
@@ -1812,8 +1812,8 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Dot product methods for a bit-matrix with any bit-store type or with another bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
-    /// Matrix-vector multiplication returning `M * v` as a new [`BitVec`].
+impl<Word: Unsigned> BitMatrix<Word> {
+    /// Matrix-vector multiplication returning `M * v` as a new [`BitVector`].
     ///
     /// Both operands are passed by reference and the `v` can be any bit-store type.
     ///
@@ -1826,14 +1826,14 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
-    /// let v: BitVec = BitVec::ones(3);
-    /// assert_eq!(m.dot(&v), BitVec::ones(3));
-    /// assert_eq!(&m * &v, BitVec::ones(3));
+    /// let m: BitMatrix = BitMatrix::identity(3);
+    /// let v: BitVector = BitVector::ones(3);
+    /// assert_eq!(m.dot(&v), BitVector::ones(3));
+    /// assert_eq!(&m * &v, BitVector::ones(3));
     /// ```
-    pub fn dot<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVec<Word> {
+    pub fn dot<Rhs: BitStore<Word>>(&self, rhs: &Rhs) -> BitVector<Word> {
         assert_eq!(self.cols(), rhs.len(), "Incompatible dimensions: {} != {}", self.cols(), rhs.len());
-        let mut result = BitVec::zeros(self.rows());
+        let mut result = BitVector::zeros(self.rows());
         for i in 0..self.rows() {
             if self.row(i).dot(rhs) {
                 result.set(i, true);
@@ -1842,7 +1842,7 @@ impl<Word: Unsigned> BitMat<Word> {
         result
     }
 
-    /// Vector-matrix multiplication returning `v * M` as a new [`BitVec`].
+    /// Vector-matrix multiplication returning `v * M` as a new [`BitVector`].
     ///
     /// Both operands are passed by reference and the `v` can be any bit-store type.
     ///
@@ -1855,14 +1855,14 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
-    /// let v: BitVec = BitVec::ones(3);
-    /// assert_eq!(m.left_dot(&v), BitVec::ones(3));
-    /// assert_eq!(&v * &m, BitVec::ones(3));
+    /// let m: BitMatrix = BitMatrix::identity(3);
+    /// let v: BitVector = BitVector::ones(3);
+    /// assert_eq!(m.left_dot(&v), BitVector::ones(3));
+    /// assert_eq!(&v * &m, BitVector::ones(3));
     /// ```
-    pub fn left_dot<Lhs: BitStore<Word>>(&self, lhs: &Lhs) -> BitVec<Word> {
+    pub fn left_dot<Lhs: BitStore<Word>>(&self, lhs: &Lhs) -> BitVector<Word> {
         assert_eq!(self.rows(), lhs.len(), "Incompatible dimensions: {} != {}", self.rows(), lhs.len());
-        let mut result = BitVec::zeros(self.cols());
+        let mut result = BitVector::zeros(self.cols());
         for i in 0..self.cols() {
             if lhs.dot(&self.col(i)) {
                 result.set(i, true);
@@ -1871,7 +1871,7 @@ impl<Word: Unsigned> BitMat<Word> {
         result
     }
 
-    /// Matrix-matrix multiplication returning `M * N` as a new [`BitMat`].
+    /// Matrix-matrix multiplication returning `M * N` as a new [`BitMatrix`].
     ///
     /// # Panics
     /// Panics if the operands have incompatible dimensions.
@@ -1882,20 +1882,20 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::ones(3, 3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let m1: BitMatrix = BitMatrix::ones(3, 3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// assert_eq!(m1.dot_matrix(&m2).to_compact_binary_string(), "111 111 111");
-    /// let m1: BitMat = BitMat::ones(4, 4);
-    /// let m2: BitMat = BitMat::ones(4, 4);
+    /// let m1: BitMatrix = BitMatrix::ones(4, 4);
+    /// let m2: BitMatrix = BitMatrix::ones(4, 4);
     /// assert_eq!(m1.dot_matrix(&m2).to_compact_binary_string(), "0000 0000 0000 0000");
     /// ```
     #[must_use]
-    pub fn dot_matrix(&self, rhs: &BitMat<Word>) -> Self {
+    pub fn dot_matrix(&self, rhs: &BitMatrix<Word>) -> Self {
         assert_eq!(self.cols(), rhs.rows(), "Incompatible dimensions: {} != {}", self.cols(), rhs.rows());
 
         let r = self.rows();
         let c = rhs.cols();
-        let mut result = BitMat::zeros(r, c);
+        let mut result = BitMatrix::zeros(r, c);
 
         // Row access is cheap, columns expensive, so arrange things to pull out columns as few times as possible.
         for j in 0..c {
@@ -1911,7 +1911,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods to raise a bit-matrix to a power.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns a new bit-matrix that is the result of raising this bit-matrix to the power `n`.
     ///
     /// # Note
@@ -1923,7 +1923,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::random(100, 100);
+    /// let m1: BitMatrix = BitMatrix::random(100, 100);
     /// let m2 = m1.to_the(3);
     /// let mut m3 = &m1 * &m1;
     /// m3 = &m3 * &m1;
@@ -1938,7 +1938,7 @@ impl<Word: Unsigned> BitMat<Word> {
             return Self::identity(self.rows());
         }
 
-        // If BitMat.g. n = 0b10101, then n_bit = 0b10000.
+        // If BitMatrix.g. n = 0b10101, then n_bit = 0b10000.
         let mut n_bit = n.prev_power_of_two();
 
         // Square and square-and-multiply algorithm starts with a copy of the bit-matrix.
@@ -1971,7 +1971,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::random(100, 100);
+    /// let m1: BitMatrix = BitMatrix::random(100, 100);
     /// let m2 = m1.to_the_2_to_the(2);
     /// let mut m3 = &m1 * &m1;
     /// m3 *= &m1;
@@ -1992,18 +1992,18 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods that convert bit-matrices to bit-vectors.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns a bit-vector that is the concatenation of the rows of the bit-matrix.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.to_vector().to_string(), "100010001");
     /// ```
     #[must_use]
-    pub fn to_vector(&self) -> BitVec<Word> {
-        let mut result = BitVec::with_capacity(self.len());
+    pub fn to_vector(&self) -> BitVector<Word> {
+        let mut result = BitVector::with_capacity(self.len());
         for row in &self.m_rows {
             result.append_store(row);
         }
@@ -2015,12 +2015,12 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.to_vector_of_cols().to_string(), "100010001");
     /// ```
     #[must_use]
-    pub fn to_vector_of_cols(&self) -> BitVec<Word> {
-        let mut result = BitVec::with_capacity(self.len());
+    pub fn to_vector_of_cols(&self) -> BitVector<Word> {
+        let mut result = BitVector::with_capacity(self.len());
         for col in 0..self.cols() {
             result.append_store(&self.col(col));
         }
@@ -2029,7 +2029,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods to compute echelon forms for a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Transforms an arbitrary shaped, non-empty, bit-matrix to row-echelon form (in-place).
     ///
     /// The method returns a bit-vector that shows which columns have a "pivot" (a non-zero on or below the diagonal).
@@ -2048,18 +2048,18 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
     /// m.set(2, 1, false);
     /// let has_pivot = m.to_echelon_form();
     /// assert_eq!(has_pivot.to_string(), "111");
     /// assert_eq!(m.to_compact_binary_string(), "100 010 001");
     /// ```
     #[must_use]
-    pub fn to_echelon_form(&mut self) -> BitVec<Word> {
+    pub fn to_echelon_form(&mut self) -> BitVector<Word> {
         assert!(!self.is_empty(), "Bit-matrix must not be empty");
 
         // We return a bit-vector that shows which columns have a pivot -- start by assuming none.
-        let mut has_pivot: BitVec<Word> = BitVec::zeros(self.cols());
+        let mut has_pivot: BitVector<Word> = BitVector::zeros(self.cols());
 
         // The current row of the echelon form we are working on.
         let mut r = 0;
@@ -2117,14 +2117,14 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m: BitMat = BitMat::identity(3);
+    /// let mut m: BitMatrix = BitMatrix::identity(3);
     /// m.set(2, 1, false);
     /// let pivots = m.to_reduced_echelon_form();
     /// assert_eq!(pivots.to_string(), "111");
     /// assert_eq!(m.to_compact_binary_string(), "100 010 001");
     /// ```
     #[must_use]
-    pub fn to_reduced_echelon_form(&mut self) -> BitVec<Word> {
+    pub fn to_reduced_echelon_form(&mut self) -> BitVector<Word> {
         // Start with the echelon form.
         let has_pivot = self.to_echelon_form();
 
@@ -2148,7 +2148,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Method to compute the inverse of a bit-matrix if it exists.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns the inverse of a square bit-matrix or `None` if the matrix is singular.
     ///
     /// # Panics
@@ -2157,11 +2157,11 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.inverse().unwrap().to_compact_binary_string(), "100 010 001");
     /// ```
     #[must_use]
-    pub fn inverse(&self) -> Option<BitMat<Word>> {
+    pub fn inverse(&self) -> Option<BitMatrix<Word>> {
         // The bit-matrix must be square.
         if !self.is_square() {
             return None;
@@ -2169,7 +2169,7 @@ impl<Word: Unsigned> BitMat<Word> {
 
         // Create a copy of the bit-matrix & augment it with the identity matrix on the right.
         let mut matrix = self.clone();
-        matrix.append_cols(&BitMat::identity(self.rows()));
+        matrix.append_cols(&BitMatrix::identity(self.rows()));
 
         // Transform the augmented matrix to reduced row-echelon form (we don't need the pivot info).
         let _ = matrix.to_reduced_echelon_form();
@@ -2186,7 +2186,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Associated functions that determine the probability of a "fair coin" bit-matrix being invertible or singular.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns the probability that a square `n x n` bit-matrix is invertible if each element is chosen independently
     /// and uniformly at random by flips of a fair coin.
     ///
@@ -2200,7 +2200,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// assert!((<BitMat>::probability_invertible(3) - 0.289).abs() < 1e-3);
+    /// assert!((<BitMatrix>::probability_invertible(3) - 0.289).abs() < 1e-3);
     /// ```
     #[must_use]
     pub fn probability_invertible(n: usize) -> f64 {
@@ -2234,21 +2234,21 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// assert!((BitMat::<u8>::probability_singular(3) - 0.711).abs() < 1e-3);
+    /// assert!((BitMatrix::<u8>::probability_singular(3) - 0.711).abs() < 1e-3);
     /// ```
     #[must_use]
     pub fn probability_singular(n: usize) -> f64 { 1.0 - Self::probability_invertible(n) }
 }
 
 /// Linear system solvers and decompositions ...
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns the Gaussian elimination solver for this bit-matrix and the passed r.h.s. vector `b`.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::ones(3, 3);
-    /// let b: BitVec = BitVec::ones(3);
+    /// let A: BitMatrix = BitMatrix::ones(3, 3);
+    /// let b: BitVector = BitVector::ones(3);
     /// let solver = A.solver_for(&b);
     /// assert_eq!(solver.rank(), 1);
     /// assert_eq!(solver.free_count(), 2);
@@ -2257,7 +2257,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// assert_eq!(solver.is_consistent(), true);
     /// ```
     #[must_use]
-    pub fn solver_for(&self, b: &BitVec<Word>) -> BitGauss<Word> { BitGauss::new(self, b) }
+    pub fn solver_for(&self, b: &BitVector<Word>) -> BitGauss<Word> { BitGauss::new(self, b) }
 
     /// Returns a solution to the system of linear equations `A.x = b` or `None` if the system is inconsistent.
     ///
@@ -2267,12 +2267,12 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::identity(3);
-    /// let b: BitVec = BitVec::from_string("111").unwrap();
+    /// let A: BitMatrix = BitMatrix::identity(3);
+    /// let b: BitVector = BitVector::from_string("111").unwrap();
     /// assert_eq!(A.x_for(&b).unwrap().to_string(), "111");
     /// ```
     #[must_use]
-    pub fn x_for(&self, b: &BitVec<Word>) -> Option<BitVec<Word>> { self.solver_for(b).x() }
+    pub fn x_for(&self, b: &BitVector<Word>) -> Option<BitVector<Word>> { self.solver_for(b).x() }
 
     /// Returns the LU decomposition of this bit-matrix which must be square.
     ///
@@ -2294,7 +2294,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples (checks that `LU = PA` for a random matrix `A`)
     /// ```
     /// use gf2::*;
-    /// let A: BitMat = BitMat::random(40, 40);
+    /// let A: BitMatrix = BitMatrix::random(40, 40);
     /// let lu = A.lu_decomposition();
     /// let LU = lu.L() * lu.U();
     /// let mut PA = A.clone();
@@ -2306,8 +2306,8 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods to compute the characteristic polynomial of a bit-matrix.
-impl<Word: Unsigned> BitMat<Word> {
-    /// Returns the characteristic polynomial of any square bit-matrix as a [`BitPoly`].
+impl<Word: Unsigned> BitMatrix<Word> {
+    /// Returns the characteristic polynomial of any square bit-matrix as a [`BitPolynomial`].
     ///
     /// # Note
     /// The method uses similarity transformations to convert the bit-matrix to *Frobenius form* which has a readily
@@ -2320,21 +2320,21 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(2);
+    /// let m: BitMatrix = BitMatrix::identity(2);
     /// assert_eq!(m.characteristic_polynomial().to_string(), "1 + x^2");
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.characteristic_polynomial().to_string(), "1 + x + x^2 + x^3");
-    /// let m: BitMat = BitMat::random(100, 100);
+    /// let m: BitMatrix = BitMatrix::random(100, 100);
     /// let p = m.characteristic_polynomial();
     /// assert_eq!(p.eval_matrix(&m).is_zero(), true);
     /// ```
     #[must_use]
-    pub fn characteristic_polynomial(&self) -> BitPoly<Word> {
+    pub fn characteristic_polynomial(&self) -> BitPolynomial<Word> {
         assert!(self.is_square(), "Bit-matrix must be square not {}x{}", self.rows(), self.cols());
         Self::characteristic_polynomial_frobenius_matrix(&self.frobenius_form())
     }
 
-    /// Associated function that returns the characteristic polynomial of a *Frobenius matrix* as a [`BitPoly`].
+    /// Associated function that returns the characteristic polynomial of a *Frobenius matrix* as a [`BitPolynomial`].
     ///
     /// A Frobenius matrix is a square matrix that consists of blocks of *companion matrices* along the diagonal.
     /// Each companion matrix is a square matrix that is all zeros except for an arbitrary top row and a principal
@@ -2344,10 +2344,10 @@ impl<Word: Unsigned> BitMat<Word> {
     /// The characteristic polynomial of a Frobenius matrix is the product of the characteristic polynomials of its
     /// block companion matrices which are readily computed.
     #[must_use]
-    pub fn characteristic_polynomial_frobenius_matrix(top_rows: &[BitVec<Word>]) -> BitPoly<Word> {
+    pub fn characteristic_polynomial_frobenius_matrix(top_rows: &[BitVector<Word>]) -> BitPolynomial<Word> {
         let n_companions = top_rows.len();
         if n_companions == 0 {
-            return BitPoly::zero();
+            return BitPolynomial::zero();
         }
 
         // Compute the product of the characteristic polynomials of the companion matrices.
@@ -2361,7 +2361,7 @@ impl<Word: Unsigned> BitMat<Word> {
         result
     }
 
-    /// Associated methods to return the characteristic polynomial of a *companion matrix* as a [`BitPoly`].
+    /// Associated methods to return the characteristic polynomial of a *companion matrix* as a [`BitPolynomial`].
     ///
     /// The function expects to be passed the top row of the companion matrix as a bit-vector.
     ///
@@ -2377,21 +2377,21 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Example
     /// ```
     /// use gf2::*;
-    /// let top_row: BitVec = BitVec::from_binary_string("101").unwrap();
-    /// assert_eq!(BitMat::characteristic_polynomial_companion_matrix(&top_row).to_string(), "1 + x^2 + x^3");
+    /// let top_row: BitVector = BitVector::from_binary_string("101").unwrap();
+    /// assert_eq!(BitMatrix::characteristic_polynomial_companion_matrix(&top_row).to_string(), "1 + x^2 + x^3");
     /// ```
     #[must_use]
-    pub fn characteristic_polynomial_companion_matrix(top_row: &BitVec<Word>) -> BitPoly<Word> {
+    pub fn characteristic_polynomial_companion_matrix(top_row: &BitVector<Word>) -> BitPolynomial<Word> {
         let n = top_row.len();
 
         // The characteristic polynomial is degree n with n + 1 coefficients (leading coefficient is 1).
-        let mut coeffs = BitVec::ones(n + 1);
+        let mut coeffs = BitVector::ones(n + 1);
 
         // The lower order coefficients are the top row of the companion matrix in reverse order.
         for j in 0..n {
             coeffs.set(n - j - 1, top_row[j]);
         }
-        BitPoly::from_coefficients(coeffs)
+        BitPolynomial::from_coefficients(coeffs)
     }
 
     /// Returns the *Frobenius form* of this bit-matrix in compact top-row only form.
@@ -2409,7 +2409,7 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Panics
     /// Panics if the bit-matrix is not square.
     #[must_use]
-    pub fn frobenius_form(&self) -> Vec<BitVec<Word>> {
+    pub fn frobenius_form(&self) -> Vec<BitVector<Word>> {
         // The bit-matrix must be square.
         assert!(self.is_square(), "Bit-matrix must be square not {}x{}", self.rows(), self.cols());
 
@@ -2449,7 +2449,7 @@ impl<Word: Unsigned> BitMat<Word> {
     ///
     /// # Examples
     #[must_use]
-    fn danilevsky_step(&mut self, n: usize) -> BitVec<Word> {
+    fn danilevsky_step(&mut self, n: usize) -> BitVector<Word> {
         assert!(
             n <= self.rows(),
             "Asked to look at the top-left {n} x {n} sub-matrix but the matrix has only {} rows",
@@ -2458,7 +2458,7 @@ impl<Word: Unsigned> BitMat<Word> {
 
         // Edge case: A 1 x 1 matrix is already in companion form.
         if n == 1 {
-            return BitVec::constant(self[0][0], 1);
+            return BitVector::constant(self[0][0], 1);
         }
 
         // Step k of algorithm attempts to reduce row k to companion form.
@@ -2517,7 +2517,7 @@ impl<Word: Unsigned> BitMat<Word> {
         // At this point, k == 0 OR the bit-matrix has non-removable zero on the sub-diagonal of row k.
         // Either way, the bottom-right (n-k) x (n-k) sub-matrix, starting at self[k][k], is in companion form.
         // We return the top row of that companion sub-matrix.
-        let mut top_row = BitVec::zeros(n - k);
+        let mut top_row = BitVector::zeros(n - k);
         for j in 0..n - k {
             top_row.set(j, self[k][k + j]);
         }
@@ -2526,7 +2526,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods to convert bit-matrices to strings.
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Returns a multi-line binary string representation of the bit-matrix.
     ///
     /// The matrix rows are separated by *newlines*.
@@ -2535,9 +2535,9 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.to_binary_string(), format!("1 0 0\n0 1 0\n0 0 1"));
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.to_binary_string(), "");
     /// ```
     #[must_use]
@@ -2552,10 +2552,10 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// let bar: char = '\u{2502}';
     /// assert_eq!(m.to_pretty_binary_string(), format!("{bar}1 0 0{bar}\n{bar}0 1 0{bar}\n{bar}0 0 1{bar}"));
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.to_pretty_binary_string(), "");
     /// ```
     #[must_use]
@@ -2572,9 +2572,9 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.to_compact_binary_string(), "100 010 001");
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.to_compact_binary_string(), "");
     /// ```
     #[must_use]
@@ -2589,9 +2589,9 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = BitMat::identity(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!(m.to_custom_binary_string("\n", "", "[", "]"), "[100]\n[010]\n[001]");
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.to_custom_binary_string(" ", " ", "[", "]"), "");
     /// ```
     #[must_use]
@@ -2606,14 +2606,14 @@ impl<Word: Unsigned> BitMat<Word> {
     /// Returns a hex string representation of the bit-matrix.
     ///
     /// The matrix rows are separated by *newlines*.
-    /// Each row is a hex string representation of a bit-vector (see e.g. [`BitVec::to_hex_string`]).
+    /// Each row is a hex string representation of a bit-vector (see e.g. [`BitVector::to_hex_string`]).
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat<u8> = BitMat::ones(4, 4);
+    /// let m: BitMatrix<u8> = BitMatrix::ones(4, 4);
     /// assert_eq!(m.to_hex_string(), "F\nF\nF\nF");
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.to_hex_string(), "");
     /// ```
     #[must_use]
@@ -2624,14 +2624,14 @@ impl<Word: Unsigned> BitMat<Word> {
     /// Returns a compact hex string representation of the bit-matrix.
     ///
     /// The matrix rows are separated by a single *space* character.
-    /// Each row is a hex string representation of a bit-vector (see e.g. [`BitVec::to_hex_string`]).
+    /// Each row is a hex string representation of a bit-vector (see e.g. [`BitVector::to_hex_string`]).
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat<u8> = BitMat::ones(4, 4);
+    /// let m: BitMatrix<u8> = BitMatrix::ones(4, 4);
     /// assert_eq!(m.to_compact_hex_string(), "F F F F");
-    /// let m: BitMat = BitMat::new();
+    /// let m: BitMatrix = BitMatrix::new();
     /// assert_eq!(m.to_compact_hex_string(), "");
     /// ```
     #[must_use]
@@ -2641,7 +2641,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods to perform bitwise operations between bit-matrices (these are also available via operator overloading).
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Performs an in-place bitwise XOR of this bit-matrix with another.
     ///
     /// # Panics
@@ -2650,13 +2650,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let mut m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// m1.xor_eq(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "011 101 110");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// ```
-    pub fn xor_eq(&mut self, rhs: &BitMat<Word>) {
+    pub fn xor_eq(&mut self, rhs: &BitMatrix<Word>) {
         assert_eq!(self.rows(), rhs.rows(), "Length mismatch {} != {}", self.rows(), rhs.rows());
         assert_eq!(self.cols(), rhs.cols(), "Length mismatch {} != {}", self.cols(), rhs.cols());
         for i in 0..self.rows() {
@@ -2672,15 +2672,15 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// let m3 = m1.xor(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "100 010 001");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// assert_eq!(m3.to_compact_binary_string(), "011 101 110");
     /// ```
     #[must_use]
-    pub fn xor(&self, rhs: &BitMat<Word>) -> BitMat<Word> {
+    pub fn xor(&self, rhs: &BitMatrix<Word>) -> BitMatrix<Word> {
         let mut result = self.clone();
         result.xor_eq(rhs);
         result
@@ -2694,13 +2694,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let mut m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// m1.and_eq(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "100 010 001");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// ```
-    pub fn and_eq(&mut self, rhs: &BitMat<Word>) {
+    pub fn and_eq(&mut self, rhs: &BitMatrix<Word>) {
         assert_eq!(self.rows(), rhs.rows(), "Length mismatch {} != {}", self.rows(), rhs.rows());
         assert_eq!(self.cols(), rhs.cols(), "Length mismatch {} != {}", self.cols(), rhs.cols());
         for i in 0..self.rows() {
@@ -2716,15 +2716,15 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// let m3 = m1.and(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "100 010 001");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// assert_eq!(m3.to_compact_binary_string(), "100 010 001");
     /// ```
     #[must_use]
-    pub fn and(&self, rhs: &BitMat<Word>) -> BitMat<Word> {
+    pub fn and(&self, rhs: &BitMatrix<Word>) -> BitMatrix<Word> {
         let mut result = self.clone();
         result.and_eq(rhs);
         result
@@ -2738,13 +2738,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let mut m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// m1.or_eq(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "111 111 111");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// ```
-    pub fn or_eq(&mut self, rhs: &BitMat<Word>) {
+    pub fn or_eq(&mut self, rhs: &BitMatrix<Word>) {
         assert_eq!(self.rows(), rhs.rows(), "Length mismatch {} != {}", self.rows(), rhs.rows());
         assert_eq!(self.cols(), rhs.cols(), "Length mismatch {} != {}", self.cols(), rhs.cols());
         for i in 0..self.rows() {
@@ -2760,15 +2760,15 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// let m3 = m1.or(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "100 010 001");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// assert_eq!(m3.to_compact_binary_string(), "111 111 111");
     /// ```
     #[must_use]
-    pub fn or(&self, rhs: &BitMat<Word>) -> BitMat<Word> {
+    pub fn or(&self, rhs: &BitMatrix<Word>) -> BitMatrix<Word> {
         let mut result = self.clone();
         result.or_eq(rhs);
         result
@@ -2776,7 +2776,7 @@ impl<Word: Unsigned> BitMat<Word> {
 }
 
 /// Methods to perform arithmetic between bit-matrices (these are also available via operator overloading).
-impl<Word: Unsigned> BitMat<Word> {
+impl<Word: Unsigned> BitMatrix<Word> {
     /// Adds another bit-matrix to this one in-place.
     ///
     /// In GF(2) addition is the same as the XOR operation.
@@ -2787,13 +2787,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let mut m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// m1.plus_eq(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "011 101 110");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// ```
-    pub fn plus_eq(&mut self, rhs: &BitMat<Word>) { self.xor_eq(rhs); }
+    pub fn plus_eq(&mut self, rhs: &BitMatrix<Word>) { self.xor_eq(rhs); }
 
     /// Returns a new bit-matrix that is the sum of this bit-matrix with another.
     ///
@@ -2805,15 +2805,15 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// let m3 = m1.plus(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "100 010 001");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// assert_eq!(m3.to_compact_binary_string(), "011 101 110");
     /// ```
     #[must_use]
-    pub fn plus(&self, rhs: &BitMat<Word>) -> BitMat<Word> {
+    pub fn plus(&self, rhs: &BitMatrix<Word>) -> BitMatrix<Word> {
         let mut result = self.clone();
         result.xor_eq(rhs);
         result
@@ -2829,13 +2829,13 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let mut m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// m1.minus_eq(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "011 101 110");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// ```
-    pub fn minus_eq(&mut self, rhs: &BitMat<Word>) { self.xor_eq(rhs); }
+    pub fn minus_eq(&mut self, rhs: &BitMatrix<Word>) { self.xor_eq(rhs); }
 
     /// Returns a new bit-matrix that is the difference of this bit-matrix with another.
     ///
@@ -2847,15 +2847,15 @@ impl<Word: Unsigned> BitMat<Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m1: BitMat = BitMat::identity(3);
-    /// let m2: BitMat = BitMat::ones(3, 3);
+    /// let m1: BitMatrix = BitMatrix::identity(3);
+    /// let m2: BitMatrix = BitMatrix::ones(3, 3);
     /// let m3 = m1.minus(&m2);
     /// assert_eq!(m1.to_compact_binary_string(), "100 010 001");
     /// assert_eq!(m2.to_compact_binary_string(), "111 111 111");
     /// assert_eq!(m3.to_compact_binary_string(), "011 101 110");
     /// ```
     #[must_use]
-    pub fn minus(&self, rhs: &BitMat<Word>) -> BitMat<Word> {
+    pub fn minus(&self, rhs: &BitMatrix<Word>) -> BitMatrix<Word> {
         let mut result = self.clone();
         result.xor_eq(rhs);
         result
@@ -2867,24 +2867,24 @@ impl<Word: Unsigned> BitMat<Word> {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /// The `Default` trait implementation for a bit-matrix.
-impl<Word: Unsigned> Default for BitMat<Word> {
+impl<Word: Unsigned> Default for BitMatrix<Word> {
     /// The default constructor creates an empty bit-matrix. <br>
     /// No capacity is reserved until elements are added.
     ///
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let m: BitMat = Default::default();
+    /// let m: BitMatrix = Default::default();
     /// assert_eq!(m.to_compact_binary_string(), "");
     /// ```
     fn default() -> Self { Self::new() }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The `Index` & `IndexMut` trait implementations for the `BitMat` type.
+// The `Index` & `IndexMut` trait implementations for the `BitMatrix` type.
 // ---------------------------------------------------------------------------------------------------------------------
 
-/// The `Index` trait implementation for the `BitMat` type.
+/// The `Index` trait implementation for the `BitMatrix` type.
 ///
 /// Returns a reference to *row* `i` of the matrix.
 ///
@@ -2894,13 +2894,13 @@ impl<Word: Unsigned> Default for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m: BitMat = BitMat::identity(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
 /// assert_eq!(m[0].to_string(), "100");
 /// assert_eq!(m[1].to_string(), "010");
 /// assert_eq!(m[2].to_string(), "001");
 /// ```
-impl<Word: Unsigned> Index<usize> for BitMat<Word> {
-    type Output = BitVec<Word>;
+impl<Word: Unsigned> Index<usize> for BitMatrix<Word> {
+    type Output = BitVector<Word>;
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
@@ -2909,7 +2909,7 @@ impl<Word: Unsigned> Index<usize> for BitMat<Word> {
     }
 }
 
-/// The `IndexMut` trait implementation for the `BitMat` type.
+/// The `IndexMut` trait implementation for the `BitMatrix` type.
 ///
 /// Returns a mutable reference to *row* `i` of the matrix.
 ///
@@ -2919,13 +2919,13 @@ impl<Word: Unsigned> Index<usize> for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut m: BitMat = BitMat::zeros(3, 3);
+/// let mut m: BitMatrix = BitMatrix::zeros(3, 3);
 /// m[0].set(0, true);
 /// assert_eq!(m[0].to_string(), "100");
 /// assert_eq!(m[1].to_string(), "000");
 /// assert_eq!(m[2].to_string(), "000");
 /// ```
-impl<Word: Unsigned> IndexMut<usize> for BitMat<Word> {
+impl<Word: Unsigned> IndexMut<usize> for BitMatrix<Word> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         debug_assert!(index < self.rows(), "Row {} is not in bounds [0, {})", index, self.rows());
@@ -2934,26 +2934,26 @@ impl<Word: Unsigned> IndexMut<usize> for BitMat<Word> {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The `Display`-like trait implementations for the `BitMat` type.
+// The `Display`-like trait implementations for the `BitMatrix` type.
 // ---------------------------------------------------------------------------------------------------------------------
 
-/// The `Debug` trait implementation for a `BitMat`.
+/// The `Debug` trait implementation for a `BitMatrix`.
 ///
 /// The output is a one-line "binary" string representation of the bit-matrix.
 ///
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m: BitMat = BitMat::identity(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
 /// assert_eq!(format!("{m:?}"), "100 010 001");
-/// let m: BitMat = BitMat::new();
+/// let m: BitMatrix = BitMatrix::new();
 /// assert_eq!(format!("{m:?}"), "");
 /// ```
-impl<Word: Unsigned> fmt::Debug for BitMat<Word> {
+impl<Word: Unsigned> fmt::Debug for BitMatrix<Word> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", self.to_compact_binary_string()) }
 }
 
-/// The `Display` trait implementation for a `BitMat`.
+/// The `Display` trait implementation for a `BitMatrix`.
 ///
 /// The rows of the matrix are output as a 0's and 1's formatted as follows:
 ///
@@ -2969,15 +2969,15 @@ impl<Word: Unsigned> fmt::Debug for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m: BitMat = BitMat::identity(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
 /// let bar: char = '\u{2502}';
 /// assert_eq!(format!("{m}"), format!("{bar}1 0 0{bar}\n{bar}0 1 0{bar}\n{bar}0 0 1{bar}"));
 /// assert_eq!(format!("{m:#}"), "100 010 001");
-/// let m: BitMat = BitMat::new();
+/// let m: BitMatrix = BitMatrix::new();
 /// assert_eq!(format!("{m}"), "");
 /// assert_eq!(format!("{m:#}"), "");
 /// ```
-impl<Word: Unsigned> fmt::Display for BitMat<Word> {
+impl<Word: Unsigned> fmt::Display for BitMatrix<Word> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
             write!(f, "{}", self.to_compact_binary_string())
@@ -2988,7 +2988,7 @@ impl<Word: Unsigned> fmt::Display for BitMat<Word> {
     }
 }
 
-/// The `Binary` trait implementation for a `BitMat`.
+/// The `Binary` trait implementation for a `BitMatrix`.
 ///
 /// Each row of the matrix is output as a binary number string with a "0b" prefix.
 ///
@@ -3001,20 +3001,20 @@ impl<Word: Unsigned> fmt::Display for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m: BitMat = BitMat::identity(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
 /// assert_eq!(format!("{m:b}"), "0b100\n0b010\n0b001");
 /// assert_eq!(format!("{m:#b}"), "0b100 0b010 0b001");
-/// let m: BitMat = BitMat::new();
+/// let m: BitMatrix = BitMatrix::new();
 /// assert_eq!(format!("{m:b}"), "");
 /// ```
-impl<Word: Unsigned> fmt::Binary for BitMat<Word> {
+impl<Word: Unsigned> fmt::Binary for BitMatrix<Word> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let row_strings: Vec<String> = self.m_rows.iter().map(|row| format!("{row:#b}")).collect();
         if f.alternate() { write!(f, "{}", row_strings.join(" ")) } else { write!(f, "{}", row_strings.join("\n")) }
     }
 }
 
-/// The `UpperHex` trait implementation for a `BitMat`.
+/// The `UpperHex` trait implementation for a `BitMatrix`.
 ///
 /// The output is the "upper hex" string representation of the bit-matrix.
 ///
@@ -3025,19 +3025,19 @@ impl<Word: Unsigned> fmt::Binary for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m: BitMat = BitMat::identity(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
 /// assert_eq!(format!("{m:X}"), "0X4.8\n0X2.8\n0X1.8");
-/// let m: BitMat = BitMat::new();
+/// let m: BitMatrix = BitMatrix::new();
 /// assert_eq!(format!("{m:X}"), "");
 /// ```
-impl<Word: Unsigned> fmt::UpperHex for BitMat<Word> {
+impl<Word: Unsigned> fmt::UpperHex for BitMatrix<Word> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let row_strings: Vec<String> = self.m_rows.iter().map(|row| format!("{row:#X}")).collect();
         if f.alternate() { write!(f, "{}", row_strings.join(" ")) } else { write!(f, "{}", row_strings.join("\n")) }
     }
 }
 
-/// The `LowerHex` trait implementation for a `BitMat`.
+/// The `LowerHex` trait implementation for a `BitMatrix`.
 ///
 /// The output is the "lower hex" string representation of the bit-matrix.
 ///
@@ -3048,12 +3048,12 @@ impl<Word: Unsigned> fmt::UpperHex for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m: BitMat = BitMat::identity(3);
+/// let m: BitMatrix = BitMatrix::identity(3);
 /// assert_eq!(format!("{m:x}"), "0x4.8\n0x2.8\n0x1.8");
-/// let m: BitMat = BitMat::new();
+/// let m: BitMatrix = BitMatrix::new();
 /// assert_eq!(format!("{m:x}"), "");
 /// ```
-impl<Word: Unsigned> fmt::LowerHex for BitMat<Word> {
+impl<Word: Unsigned> fmt::LowerHex for BitMatrix<Word> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let row_strings: Vec<String> = self.m_rows.iter().map(|row| format!("{row:#x}")).collect();
         if f.alternate() { write!(f, "{}", row_strings.join(" ")) } else { write!(f, "{}", row_strings.join("\n")) }
@@ -3061,10 +3061,10 @@ impl<Word: Unsigned> fmt::LowerHex for BitMat<Word> {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// The `Not` bitwise trait implementations for the `BitMat` type.
+// The `Not` bitwise trait implementations for the `BitMatrix` type.
 // ---------------------------------------------------------------------------------------------------------------------
 
-/// The `Not` trait implementation for a `BitMat` reference.
+/// The `Not` trait implementation for a `BitMatrix` reference.
 ///
 /// Returns a new bit-matrix that has the same bits but all flipped.
 ///
@@ -3074,19 +3074,19 @@ impl<Word: Unsigned> fmt::LowerHex for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m1: BitMat = BitMat::identity(3);
+/// let m1: BitMatrix = BitMatrix::identity(3);
 /// let m2 = !&m1;
 /// assert_eq!(m1.to_compact_binary_string(), "100 010 001");
 /// assert_eq!(m2.to_compact_binary_string(), "011 101 110");
 /// ```
-impl<Word: Unsigned> Not for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Not for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
     fn not(self) -> Self::Output { self.flipped() }
 }
 
-/// The `Not` trait implementation for a `BitMat`.
+/// The `Not` trait implementation for a `BitMatrix`.
 ///
 /// Returns a new bit-matrix that has the same bits but all flipped.
 ///
@@ -3096,12 +3096,12 @@ impl<Word: Unsigned> Not for &BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let m1: BitMat = BitMat::identity(3);
+/// let m1: BitMatrix = BitMatrix::identity(3);
 /// let m2 = !m1;
 /// assert_eq!(m2.to_compact_binary_string(), "011 101 110");
 /// ```
-impl<Word: Unsigned> Not for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Not for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
     fn not(self) -> Self::Output { self.flipped() }
@@ -3126,67 +3126,67 @@ impl<Word: Unsigned> Not for BitMat<Word> {
 // --------------------------------------------------------------------------------------------------------------------
 
 /// Performs `&lhs ^= &rhs` where `lhs` and `rhs` are bit-matrices. Does not consume `rhs`.
-impl<Word: Unsigned> BitXorAssign<&BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> BitXorAssign<&BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn bitxor_assign(&mut self, rhs: &BitMat<Word>) { self.xor_eq(rhs); }
+    fn bitxor_assign(&mut self, rhs: &BitMatrix<Word>) { self.xor_eq(rhs); }
 }
 
 /// Performs `&lhs ^= rhs` where `lhs` and `rhs` are bit-matrices. Consumes `rhs`.
-impl<Word: Unsigned> BitXorAssign<BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> BitXorAssign<BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn bitxor_assign(&mut self, rhs: BitMat<Word>) { self.xor_eq(&rhs); }
+    fn bitxor_assign(&mut self, rhs: BitMatrix<Word>) { self.xor_eq(&rhs); }
 }
 
 /// Performs `&lhs &= &rhs` where `lhs` and `rhs` are bit-matrices. Does not consume `rhs`.
-impl<Word: Unsigned> BitAndAssign<&BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> BitAndAssign<&BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn bitand_assign(&mut self, rhs: &BitMat<Word>) { self.and_eq(rhs); }
+    fn bitand_assign(&mut self, rhs: &BitMatrix<Word>) { self.and_eq(rhs); }
 }
 
 /// Performs `&lhs &= rhs` where `lhs` and `rhs` are bit-matrices. Consumes `rhs`.
-impl<Word: Unsigned> BitAndAssign<BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> BitAndAssign<BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn bitand_assign(&mut self, rhs: BitMat<Word>) { self.and_eq(&rhs); }
+    fn bitand_assign(&mut self, rhs: BitMatrix<Word>) { self.and_eq(&rhs); }
 }
 
 /// Performs `&lhs |= &rhs` where `lhs` and `rhs` are bit-matrices. Does not consume `rhs`.
-impl<Word: Unsigned> BitOrAssign<&BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> BitOrAssign<&BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn bitor_assign(&mut self, rhs: &BitMat<Word>) { self.or_eq(rhs); }
+    fn bitor_assign(&mut self, rhs: &BitMatrix<Word>) { self.or_eq(rhs); }
 }
 
 /// Performs `&lhs |= rhs` where `lhs` and `rhs` are bit-matrices. Consumes `rhs`.
-impl<Word: Unsigned> BitOrAssign<BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> BitOrAssign<BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn bitor_assign(&mut self, rhs: BitMat<Word>) { self.or_eq(&rhs); }
+    fn bitor_assign(&mut self, rhs: BitMatrix<Word>) { self.or_eq(&rhs); }
 }
 
 /// Performs `&lhs += &rhs` where `lhs` and `rhs` are bit-matrices. Does not consume `rhs`.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> AddAssign<&BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> AddAssign<&BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn add_assign(&mut self, rhs: &BitMat<Word>) { self.xor_eq(rhs); }
+    fn add_assign(&mut self, rhs: &BitMatrix<Word>) { self.xor_eq(rhs); }
 }
 
 /// Performs `&lhs += rhs` where `lhs` and `rhs` are bit-matrices. Consumes `rhs`.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> AddAssign<BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> AddAssign<BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn add_assign(&mut self, rhs: BitMat<Word>) { self.xor_eq(&rhs); }
+    fn add_assign(&mut self, rhs: BitMatrix<Word>) { self.xor_eq(&rhs); }
 }
 
 /// Performs `&lhs -= &rhs` where `lhs` and `rhs` are bit-matrices. Does not consume `rhs`.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> SubAssign<&BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> SubAssign<&BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn sub_assign(&mut self, rhs: &BitMat<Word>) { self.xor_eq(rhs); }
+    fn sub_assign(&mut self, rhs: &BitMatrix<Word>) { self.xor_eq(rhs); }
 }
 
 /// Performs `&lhs -= rhs` where `lhs` and `rhs` are bit-matrices. Consumes `rhs`.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> SubAssign<BitMat<Word>> for BitMat<Word> {
+impl<Word: Unsigned> SubAssign<BitMatrix<Word>> for BitMatrix<Word> {
     #[inline]
-    fn sub_assign(&mut self, rhs: BitMat<Word>) { self.xor_eq(&rhs); }
+    fn sub_assign(&mut self, rhs: BitMatrix<Word>) { self.xor_eq(&rhs); }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -3210,171 +3210,171 @@ impl<Word: Unsigned> SubAssign<BitMat<Word>> for BitMat<Word> {
 // --------------------------------------------------------------------------------------------------------------------
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs ^ &rhs` as new bit-matrix without consuming either operand.
-impl<Word: Unsigned> BitXor<&BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitXor<&BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitxor(self, rhs: &BitMat<Word>) -> Self::Output { self.xor(rhs) }
+    fn bitxor(self, rhs: &BitMatrix<Word>) -> Self::Output { self.xor(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs ^ rhs` as new bit-matrix, consuming the `rhs` operand.
-impl<Word: Unsigned> BitXor<&BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitXor<&BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitxor(self, rhs: &BitMat<Word>) -> Self::Output { self.xor(rhs) }
+    fn bitxor(self, rhs: &BitMatrix<Word>) -> Self::Output { self.xor(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `lhs ^ &rhs` as new bit-matrix, consuming the `lhs` operand.
-impl<Word: Unsigned> BitXor<BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitXor<BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitxor(self, rhs: BitMat<Word>) -> Self::Output { self.xor(&rhs) }
+    fn bitxor(self, rhs: BitMatrix<Word>) -> Self::Output { self.xor(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `lhs ^ rhs` as new bit-matrix, consuming both operands.
-impl<Word: Unsigned> BitXor<BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitXor<BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitxor(self, rhs: BitMat<Word>) -> Self::Output { self.xor(&rhs) }
+    fn bitxor(self, rhs: BitMatrix<Word>) -> Self::Output { self.xor(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs & &rhs` as new bit-matrix without consuming either operand.
-impl<Word: Unsigned> BitAnd<&BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitAnd<&BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitand(self, rhs: &BitMat<Word>) -> Self::Output { self.and(rhs) }
+    fn bitand(self, rhs: &BitMatrix<Word>) -> Self::Output { self.and(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs & rhs` as new bit-matrix, consuming the `rhs` operand.
-impl<Word: Unsigned> BitAnd<&BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitAnd<&BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitand(self, rhs: &BitMat<Word>) -> Self::Output { self.and(rhs) }
+    fn bitand(self, rhs: &BitMatrix<Word>) -> Self::Output { self.and(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `lhs & &rhs` as new bit-matrix, consuming the `lhs` operand.
-impl<Word: Unsigned> BitAnd<BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitAnd<BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitand(self, rhs: BitMat<Word>) -> Self::Output { self.and(&rhs) }
+    fn bitand(self, rhs: BitMatrix<Word>) -> Self::Output { self.and(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `lhs & rhs` as new bit-matrix, consuming both operands.
-impl<Word: Unsigned> BitAnd<BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitAnd<BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitand(self, rhs: BitMat<Word>) -> Self::Output { self.and(&rhs) }
+    fn bitand(self, rhs: BitMatrix<Word>) -> Self::Output { self.and(&rhs) }
 }
 
 /// If `lhs` or `rhs` are bit-matrices this returns `&lhs | &rhs` as new bit-matrix without consuming either operand.
-impl<Word: Unsigned> BitOr<&BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitOr<&BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitor(self, rhs: &BitMat<Word>) -> Self::Output { self.or(rhs) }
+    fn bitor(self, rhs: &BitMatrix<Word>) -> Self::Output { self.or(rhs) }
 }
 
 /// If `lhs` or `rhs` are bit-matrices this returns `&lhs | rhs` as new bit-matrix, consuming the `rhs` operand.
-impl<Word: Unsigned> BitOr<&BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitOr<&BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitor(self, rhs: &BitMat<Word>) -> Self::Output { self.or(rhs) }
+    fn bitor(self, rhs: &BitMatrix<Word>) -> Self::Output { self.or(rhs) }
 }
 
 /// If `lhs` or `rhs` are bit-matrices this returns `lhs | &rhs` as new bit-matrix, consuming the `lhs` operand.
-impl<Word: Unsigned> BitOr<BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitOr<BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitor(self, rhs: BitMat<Word>) -> Self::Output { self.or(&rhs) }
+    fn bitor(self, rhs: BitMatrix<Word>) -> Self::Output { self.or(&rhs) }
 }
 
 /// If `lhs` or `rhs` are bit-matrices this returns `lhs | rhs` as new bit-matrix, consuming both operands.
-impl<Word: Unsigned> BitOr<BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> BitOr<BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn bitor(self, rhs: BitMat<Word>) -> Self::Output { self.or(&rhs) }
+    fn bitor(self, rhs: BitMatrix<Word>) -> Self::Output { self.or(&rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `&lhs + &rhs` as new bit-matrix without consuming either operand.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Add<&BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Add<&BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn add(self, rhs: &BitMat<Word>) -> Self::Output { self.xor(rhs) }
+    fn add(self, rhs: &BitMatrix<Word>) -> Self::Output { self.xor(rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `&lhs + rhs` as new bit-matrix, consuming the `rhs` operand.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Add<&BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Add<&BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn add(self, rhs: &BitMat<Word>) -> Self::Output { self.xor(rhs) }
+    fn add(self, rhs: &BitMatrix<Word>) -> Self::Output { self.xor(rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `lhs + &rhs` as new bit-matrix, consuming the `lhs` operand.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Add<BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Add<BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn add(self, rhs: BitMat<Word>) -> Self::Output { self.xor(&rhs) }
+    fn add(self, rhs: BitMatrix<Word>) -> Self::Output { self.xor(&rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `lhs + rhs` as new bit-matrix, consuming both operands.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Add<BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Add<BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn add(self, rhs: BitMat<Word>) -> Self::Output { self.xor(&rhs) }
+    fn add(self, rhs: BitMatrix<Word>) -> Self::Output { self.xor(&rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `&lhs - &rhs` as new bit-matrix without consuming either operand.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Sub<&BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Sub<&BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn sub(self, rhs: &BitMat<Word>) -> Self::Output { self.xor(rhs) }
+    fn sub(self, rhs: &BitMatrix<Word>) -> Self::Output { self.xor(rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `&lhs - rhs` as new bit-matrix, consuming the `rhs` operand.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Sub<&BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Sub<&BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn sub(self, rhs: &BitMat<Word>) -> Self::Output { self.xor(rhs) }
+    fn sub(self, rhs: &BitMatrix<Word>) -> Self::Output { self.xor(rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `lhs - &rhs` as new bit-matrix, consuming the `lhs` operand.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Sub<BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Sub<BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn sub(self, rhs: BitMat<Word>) -> Self::Output { self.xor(&rhs) }
+    fn sub(self, rhs: BitMatrix<Word>) -> Self::Output { self.xor(&rhs) }
 }
 
 /// If `lhs` xor `rhs` are bit-matrices this returns `lhs - rhs` as new bit-matrix, consuming both operands.
 /// In GF(2) addition & subtraction are the same as the XOR operation.
-impl<Word: Unsigned> Sub<BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Sub<BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn sub(self, rhs: BitMat<Word>) -> Self::Output { self.xor(&rhs) }
+    fn sub(self, rhs: BitMatrix<Word>) -> Self::Output { self.xor(&rhs) }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -3382,35 +3382,35 @@ impl<Word: Unsigned> Sub<BitMat<Word>> for BitMat<Word> {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs * &rhs` as new bit-matrix without consuming either operand.
-impl<Word: Unsigned> Mul<&BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Mul<&BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn mul(self, rhs: &BitMat<Word>) -> Self::Output { self.dot_matrix(rhs) }
+    fn mul(self, rhs: &BitMatrix<Word>) -> Self::Output { self.dot_matrix(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs * &rhs` as new bit-matrix consuming the `rhs` operand.
-impl<Word: Unsigned> Mul<BitMat<Word>> for &BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Mul<BitMatrix<Word>> for &BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn mul(self, rhs: BitMat<Word>) -> Self::Output { self.dot_matrix(&rhs) }
+    fn mul(self, rhs: BitMatrix<Word>) -> Self::Output { self.dot_matrix(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs * &rhs` as new bit-matrix consuming the `lhs` operand.
-impl<Word: Unsigned> Mul<&BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Mul<&BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn mul(self, rhs: &BitMat<Word>) -> Self::Output { self.dot_matrix(rhs) }
+    fn mul(self, rhs: &BitMatrix<Word>) -> Self::Output { self.dot_matrix(rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this returns `&lhs * &rhs` as new bit-matrix consuming both operands.
-impl<Word: Unsigned> Mul<BitMat<Word>> for BitMat<Word> {
-    type Output = BitMat<Word>;
+impl<Word: Unsigned> Mul<BitMatrix<Word>> for BitMatrix<Word> {
+    type Output = BitMatrix<Word>;
 
     #[inline]
-    fn mul(self, rhs: BitMat<Word>) -> Self::Output { self.dot_matrix(&rhs) }
+    fn mul(self, rhs: BitMatrix<Word>) -> Self::Output { self.dot_matrix(&rhs) }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this performs `lhs = &lhs * &rhs` without consuming `rhs`.
@@ -3424,14 +3424,14 @@ impl<Word: Unsigned> Mul<BitMat<Word>> for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut lhs: BitMat = BitMat::identity(3);
-/// let rhs: BitMat = BitMat::ones(3, 3);
+/// let mut lhs: BitMatrix = BitMatrix::identity(3);
+/// let rhs: BitMatrix = BitMatrix::ones(3, 3);
 /// lhs *= &rhs;
 /// assert_eq!(lhs.to_compact_binary_string(), "111 111 111");
 /// assert_eq!(rhs.to_compact_binary_string(), "111 111 111");
 /// ```
-impl<Word: Unsigned> MulAssign<&BitMat<Word>> for BitMat<Word> {
-    fn mul_assign(&mut self, rhs: &BitMat<Word>) { *self = &*self * rhs; }
+impl<Word: Unsigned> MulAssign<&BitMatrix<Word>> for BitMatrix<Word> {
+    fn mul_assign(&mut self, rhs: &BitMatrix<Word>) { *self = &*self * rhs; }
 }
 
 /// If `lhs` and `rhs` are bit-matrices this performs `lhs = &lhs * rhs` consuming `rhs`.
@@ -3445,30 +3445,30 @@ impl<Word: Unsigned> MulAssign<&BitMat<Word>> for BitMat<Word> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut lhs: BitMat = BitMat::identity(3);
-/// lhs *= BitMat::ones(3, 3);
+/// let mut lhs: BitMatrix = BitMatrix::identity(3);
+/// lhs *= BitMatrix::ones(3, 3);
 /// assert_eq!(lhs.to_compact_binary_string(), "111 111 111");
 /// ```
-impl<Word: Unsigned> MulAssign<BitMat<Word>> for BitMat<Word> {
-    fn mul_assign(&mut self, rhs: BitMat<Word>) { *self = &*self * rhs; }
+impl<Word: Unsigned> MulAssign<BitMatrix<Word>> for BitMatrix<Word> {
+    fn mul_assign(&mut self, rhs: BitMatrix<Word>) { *self = &*self * rhs; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Matrix-vector multiplication: M * v for a bit-matrix M and any bit-store type v is implemented using a macro.
 //
 // Note:
-// Ideally we would implement the `Mul` trait for a `BitMat` with anything `BitStore` and be done.
-// Unfortunately, Rust worries that someone downstream might also make `BitMat` to be `BitStore` and then we'd have a
+// Ideally we would implement the `Mul` trait for a `BitMatrix` with anything `BitStore` and be done.
+// Unfortunately, Rust worries that someone downstream might also make `BitMatrix` to be `BitStore` and then we'd have a
 // conflict (e.g. matrix-vector multiplication is not the same as matrix-matrix multiplication implemented above).
 //
-// So we use a macro to implement the `Mul` trait for a `BitMat` with any of our _concrete_ bit-stores.
+// So we use a macro to implement the `Mul` trait for a `BitMatrix` with any of our _concrete_ bit-stores.
 // The two operands may or may not be consumed by the operation.
 // ---------------------------------------------------------------------------------------------------------------------
 macro_rules! M_dot_v {
 
-    // The `BitVec` case which has just the one generic parameter: `Word: Unsigned`.
-    (BitVec) => {
-        M_dot_v!(@impl BitVec[Word]; [Word: Unsigned]);
+    // The `BitVector` case which has just the one generic parameter: `Word: Unsigned`.
+    (BitVector) => {
+        M_dot_v!(@impl BitVector[Word]; [Word: Unsigned]);
     };
 
     // The `BitSlice` case with an `'a` lifetime parameter as well as the `Word: Unsigned` parameter.
@@ -3485,61 +3485,61 @@ macro_rules! M_dot_v {
     // The other arms funnel to this one which does the actual work of implementing the various foreign traits:
     // This matches on the pattern `$Rhs[$RhsParams]; [$ImplParams]` where in our case:
     //
-    // $Rhs:        one of `BitVec`, `BitSlice`, or `BitArray`
+    // $Rhs:        one of `BitVector`, `BitSlice`, or `BitArray`
     // $RhsParams:  some combo of `Word`, `'a, Word`, or `N, Word`.
     // $ImplParams: some combo of `Word: Unsigned`, `'a, Word:Unsigned` or `const N: usize, Word: Unsigned, const WORDS: usize.
     //
     // The trait implementations follow and are all straightforward …
     (@impl $Rhs:ident[$($RhsParams:tt)*]; [$($ImplParams:tt)*]) => {
 
-#[doc = concat!("`BitMat`, `", stringify!($Rhs), "` multiplication where neither operand is consumed by the operation.")]
+#[doc = concat!("`BitMatrix`, `", stringify!($Rhs), "` multiplication where neither operand is consumed by the operation.")]
 ///
-/// Matrix-vector multiplication returning `&M * &v` as a new [`BitVec`].
+/// Matrix-vector multiplication returning `&M * &v` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<&$Rhs<$($RhsParams)*>> for &BitMat<Word> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<&$Rhs<$($RhsParams)*>> for &BitMatrix<Word> {
+    type Output = BitVector<Word>;
     #[inline] fn mul(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.dot(rhs) }
 }
 
-#[doc = concat!("`BitMat`, `", stringify!($Rhs), "` multiplication where the vector is consumed by the operation.")]
+#[doc = concat!("`BitMatrix`, `", stringify!($Rhs), "` multiplication where the vector is consumed by the operation.")]
 ///
-/// Matrix-vector multiplication returning `&M * v` as a new [`BitVec`].
+/// Matrix-vector multiplication returning `&M * v` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<$Rhs<$($RhsParams)*>> for &BitMat<Word> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<$Rhs<$($RhsParams)*>> for &BitMatrix<Word> {
+    type Output = BitVector<Word>;
     #[inline] fn mul(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.dot(&rhs) }
 }
 
-#[doc = concat!("`BitMat`, `", stringify!($Rhs), "` multiplication where the matrix is consumed by the operation.")]
+#[doc = concat!("`BitMatrix`, `", stringify!($Rhs), "` multiplication where the matrix is consumed by the operation.")]
 ///
-/// Matrix-vector multiplication returning `M * &v` as a new [`BitVec`].
+/// Matrix-vector multiplication returning `M * &v` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<&$Rhs<$($RhsParams)*>> for BitMat<Word> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<&$Rhs<$($RhsParams)*>> for BitMatrix<Word> {
+    type Output = BitVector<Word>;
     #[inline] fn mul(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.dot(rhs) }
 }
 
-#[doc = concat!("`BitMat`, `", stringify!($Rhs), "` multiplication where both operands are consumed by the operation.")]
+#[doc = concat!("`BitMatrix`, `", stringify!($Rhs), "` multiplication where both operands are consumed by the operation.")]
 ///
-/// Matrix-vector multiplication returning `M * v` as a new [`BitVec`].
+/// Matrix-vector multiplication returning `M * v` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<$Rhs<$($RhsParams)*>> for BitMat<Word> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<$Rhs<$($RhsParams)*>> for BitMatrix<Word> {
+    type Output = BitVector<Word>;
     #[inline] fn mul(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.dot(&rhs) }
 }
 
 };} // End of M_dot_v macro.
 
-// Invoke the macro to implement the dot product of a `BitMat` with all bit-store types.
-M_dot_v!(BitVec);
+// Invoke the macro to implement the dot product of a `BitMatrix` with all bit-store types.
+M_dot_v!(BitVector);
 M_dot_v!(BitSlice);
 #[cfg(feature = "unstable")]
 M_dot_v!(BitArray);
@@ -3549,7 +3549,7 @@ M_dot_v!(BitArray);
 //
 // Note:
 // Ideally we would implement the `Mul` trait for any bit-store type (anything `BitStore`) with a bit-matrix.
-// Unfortunately, Rust worries that someone downstream might also make `BitMat` to be `BitStore` and then we'd have a
+// Unfortunately, Rust worries that someone downstream might also make `BitMatrix` to be `BitStore` and then we'd have a
 // conflict (vector-matrix multiplication is not the same as matrix-matrix multiplication implemented above).
 //
 // So we use a macro to implement the `Mul` trait for any of our concrete bit-store types with a bit-matrix.
@@ -3557,9 +3557,9 @@ M_dot_v!(BitArray);
 // ---------------------------------------------------------------------------------------------------------------------
 macro_rules! u_dot_M {
 
-    // The `BitVec` case which has just the one generic parameter: `Word: Unsigned`.
-    (BitVec) => {
-        u_dot_M!(@impl BitVec[Word]; [Word: Unsigned]);
+    // The `BitVector` case which has just the one generic parameter: `Word: Unsigned`.
+    (BitVector) => {
+        u_dot_M!(@impl BitVector[Word]; [Word: Unsigned]);
     };
 
     // The `BitSlice` case with an `'a` lifetime parameter as well as the `Word: Unsigned` parameter.
@@ -3576,7 +3576,7 @@ macro_rules! u_dot_M {
     // The other arms funnel to this one which does the actual work of implementing the various foreign traits:
     // This matches on the pattern `$Lhs[$LhsParams]; [$ImplParams]` where in our case:
     //
-    // $Lhs:        one of `BitVec`, `BitSlice`, or `BitArray`
+    // $Lhs:        one of `BitVector`, `BitSlice`, or `BitArray`
     // $LhsParams:  some combo of `Word`, `'a, Word`, or `N, Word`.
     // $ImplParams: some combo of `Word: Unsigned`, `'a, Word:Unsigned` or `const N: usize, Word: Unsigned, const WORDS: usize.
     //
@@ -3585,7 +3585,7 @@ macro_rules! u_dot_M {
 
 #[doc = concat!("Vector-matrix multiplication for a `", stringify!($Lhs), "`")]
 impl<$($ImplParams)*> $Lhs<$($LhsParams)*> {
-    #[doc = concat!(stringify!($Lhs), " matrix multiplication` as a new [`BitVec`].")]
+    #[doc = concat!(stringify!($Lhs), " matrix multiplication` as a new [`BitVector`].")]
     ///
     /// # Panics
     /// Panics if the operands have incompatible dimensions.
@@ -3593,75 +3593,75 @@ impl<$($ImplParams)*> $Lhs<$($LhsParams)*> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let v: BitVec = BitVec::ones(3);
-    /// let m: BitMat = BitMat::identity(3);
+    /// let v: BitVector = BitVector::ones(3);
+    /// let m: BitMatrix = BitMatrix::identity(3);
     /// assert_eq!((&v * &m).to_string(), "111");
     /// ```
     #[inline] #[must_use]
-    pub fn dot_matrix(&self, rhs: &BitMat<Word>) -> BitVec<Word> { rhs.left_dot(self) }
+    pub fn dot_matrix(&self, rhs: &BitMatrix<Word>) -> BitVector<Word> { rhs.left_dot(self) }
 }
 
-#[doc = concat!("`", stringify!($Rhs), "`, `BitMat` multiplication where neither operand is consumed by the operation.")]
+#[doc = concat!("`", stringify!($Rhs), "`, `BitMatrix` multiplication where neither operand is consumed by the operation.")]
 ///
-/// Vector-matrix multiplication returning `&v * &M` as a new [`BitVec`].
+/// Vector-matrix multiplication returning `&v * &M` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<&BitMat<Word>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<&BitMatrix<Word>> for &$Lhs<$($LhsParams)*> {
+    type Output = BitVector<Word>;
 
-    fn mul(self, rhs: &BitMat<Word>) -> Self::Output {
+    fn mul(self, rhs: &BitMatrix<Word>) -> Self::Output {
         self.dot_matrix(rhs)
     }
 }
 
-#[doc = concat!("`", stringify!($Rhs), "`, `BitMat` multiplication where the vector is consumed by the operation.")]
+#[doc = concat!("`", stringify!($Rhs), "`, `BitMatrix` multiplication where the vector is consumed by the operation.")]
 ///
-/// Vector-matrix multiplication returning `v * &M` as a new [`BitVec`].
+/// Vector-matrix multiplication returning `v * &M` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<&BitMat<Word>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<&BitMatrix<Word>> for $Lhs<$($LhsParams)*> {
+    type Output = BitVector<Word>;
 
-    fn mul(self, rhs: &BitMat<Word>) -> Self::Output {
+    fn mul(self, rhs: &BitMatrix<Word>) -> Self::Output {
         self.dot_matrix(rhs)
     }
 }
 
-#[doc = concat!("`", stringify!($Rhs), "`, `BitMat` multiplication where the matrix is consumed by the operation.")]
+#[doc = concat!("`", stringify!($Rhs), "`, `BitMatrix` multiplication where the matrix is consumed by the operation.")]
 ///
-/// Vector-matrix multiplication returning `&v * M` as a new [`BitVec`].
+/// Vector-matrix multiplication returning `&v * M` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<BitMat<Word>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<BitMatrix<Word>> for &$Lhs<$($LhsParams)*> {
+    type Output = BitVector<Word>;
 
-    fn mul(self, rhs: BitMat<Word>) -> Self::Output {
+    fn mul(self, rhs: BitMatrix<Word>) -> Self::Output {
         self.dot_matrix(&rhs)
     }
 }
 
-#[doc = concat!("`", stringify!($Rhs), "`, `BitMat` multiplication where both operands are consumed by the operation.")]
+#[doc = concat!("`", stringify!($Rhs), "`, `BitMatrix` multiplication where both operands are consumed by the operation.")]
 ///
-/// Vector-matrix multiplication returning `&v * M` as a new [`BitVec`].
+/// Vector-matrix multiplication returning `&v * M` as a new [`BitVector`].
 ///
 /// # Panics
 /// Panics if the operands have incompatible dimensions.
-impl<$($ImplParams)*> Mul<BitMat<Word>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+impl<$($ImplParams)*> Mul<BitMatrix<Word>> for $Lhs<$($LhsParams)*> {
+    type Output = BitVector<Word>;
 
-    fn mul(self, rhs: BitMat<Word>) -> Self::Output {
+    fn mul(self, rhs: BitMatrix<Word>) -> Self::Output {
         self.dot_matrix(&rhs)
     }
 }
 
 };} // End of u_dot_M macro.
 
-// Invoke the macro to implement the dot product of the various bit-store types with a `BitMat`.
-// Dot product of all bit-store types with a BitMat.
-u_dot_M!(BitVec);
+// Invoke the macro to implement the dot product of the various bit-store types with a `BitMatrix`.
+// Dot product of all bit-store types with a BitMatrix.
+u_dot_M!(BitVector);
 u_dot_M!(BitSlice);
 #[cfg(feature = "unstable")]
 u_dot_M!(BitArray);
@@ -3674,7 +3674,7 @@ u_dot_M!(BitArray);
 /// Return a string representation of two matrices side by side.
 #[allow(non_snake_case)]
 #[must_use]
-pub fn string_for_AB<Word: Unsigned>(A: &BitMat<Word>, B: &BitMat<Word>) -> String {
+pub fn string_for_AB<Word: Unsigned>(A: &BitMatrix<Word>, B: &BitMatrix<Word>) -> String {
     // What is the maximum number of rows in the three matrices?
     let num_rows = A.rows().max(B.rows());
 
@@ -3696,7 +3696,7 @@ pub fn string_for_AB<Word: Unsigned>(A: &BitMat<Word>, B: &BitMat<Word>) -> Stri
 /// Return a string representation of three matrices side by side.
 #[allow(non_snake_case)]
 #[must_use]
-pub fn string_for_ABC<Word: Unsigned>(A: &BitMat<Word>, B: &BitMat<Word>, C: &BitMat<Word>) -> String {
+pub fn string_for_ABC<Word: Unsigned>(A: &BitMatrix<Word>, B: &BitMatrix<Word>, C: &BitMatrix<Word>) -> String {
     // What is the maximum number of rows in the three matrices?
     let num_rows = A.rows().max(B.rows()).max(C.rows());
 
@@ -3720,7 +3720,7 @@ pub fn string_for_ABC<Word: Unsigned>(A: &BitMat<Word>, B: &BitMat<Word>, C: &Bi
 /// Return a string representation of a matrix and vector side by side.
 #[allow(non_snake_case)]
 #[must_use]
-pub fn string_for_Au<Word: Unsigned>(A: &BitMat<Word>, u: &BitVec<Word>) -> String {
+pub fn string_for_Au<Word: Unsigned>(A: &BitMatrix<Word>, u: &BitVector<Word>) -> String {
     // What is the maximum number of rows between the matrix and vector?
     let num_rows = A.rows().max(u.len());
 
@@ -3742,7 +3742,7 @@ pub fn string_for_Au<Word: Unsigned>(A: &BitMat<Word>, u: &BitVec<Word>) -> Stri
 /// Return a string representation of a matrix and two vectors side by side.
 #[allow(non_snake_case)]
 #[must_use]
-pub fn string_for_Auv<Word: Unsigned>(A: &BitMat<Word>, u: &BitVec<Word>, v: &BitVec<Word>) -> String {
+pub fn string_for_Auv<Word: Unsigned>(A: &BitMatrix<Word>, u: &BitVector<Word>, v: &BitVector<Word>) -> String {
     // What is the maximum number of rows between the matrix and vectors?
     let num_rows = A.rows().max(u.len()).max(v.len());
 
@@ -3767,7 +3767,7 @@ pub fn string_for_Auv<Word: Unsigned>(A: &BitMat<Word>, u: &BitVec<Word>, v: &Bi
 #[allow(non_snake_case)]
 #[must_use]
 pub fn string_for_Auvw<Word: Unsigned>(
-    A: &BitMat<Word>, u: &BitVec<Word>, v: &BitVec<Word>, w: &BitVec<Word>,
+    A: &BitMatrix<Word>, u: &BitVector<Word>, v: &BitVector<Word>, w: &BitVector<Word>,
 ) -> String {
     // What is the maximum number of rows between the matrix and vectors?
     let num_rows = A.rows().max(u.len()).max(v.len()).max(w.len());

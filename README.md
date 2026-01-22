@@ -22,23 +22,23 @@ The library will efficiently perform almost all operations on that vector 64 bit
 
 This stand-alone crate provides the following principal types:
 
-| Type           | Description                                                                     |
-| -------------- | ------------------------------------------------------------------------------- |
-| [`BitArray`][] | A fixed-size vector of bits (requires compilation with the `unstable` feature). |
-| [`BitVec`][]   | A dynamically-sized vector of bits.                                             |
-| [`BitSlice`][] | A vector that is a non-owning view into contiguous ranges of bits.              |
-| [`BitPoly`][]  | A polynomial over [GF(2)][].                                                    |
-| [`BitMat`][]   | A matrix over [GF(2)][].                                                        |
+| Type                | Description                                                                     |
+| ------------------- | ------------------------------------------------------------------------------- |
+| [`BitArray`][]      | A fixed-size vector of bits (requires compilation with the `unstable` feature). |
+| [`BitVector`][]     | A dynamically-sized vector of bits.                                             |
+| [`BitSlice`][]      | A vector that is a non-owning view into contiguous ranges of bits.              |
+| [`BitPolynomial`][] | A polynomial over [GF(2)][].                                                    |
+| [`BitMatrix`][]     | A matrix over [GF(2)][].                                                        |
 
 There are also iterators for vector-like types and algorithms for solving systems of linear equations, decomposing bit matrices, and so on.
 
-The [`BitArray`][], [`BitVec`][], and [`BitSlice`][] types share many methods, and all implement the [`BitStore`][] trait, which provides a rich set of associated methods for manipulating collections of bits. The methods include bit accessors, mutators, fills, queries, stringification methods, bit-wise operators, arithmetic operators, and more. There are also various iterator types for iterating over all bits, set bits, unset bits, and underlying words in any bit-store.
+The [`BitArray`][], [`BitVector`][], and [`BitSlice`][] types share many methods, and all implement the [`BitStore`][] trait, which provides a rich set of associated methods for manipulating collections of bits. The methods include bit accessors, mutators, fills, queries, stringification methods, bit-wise operators, arithmetic operators, and more. There are also various iterator types for iterating over all bits, set bits, unset bits, and underlying words in any bit-store.
 
-The [`BitPoly`][] type has methods for polynomial arithmetic (addition, multiplication, etc.)
+The [`BitPolynomial`][] type has methods for polynomial arithmetic (addition, multiplication, etc.)
 It can also be used to compute $x^N$ modulo any bit-polynomial, where $N$ can be a huge integer.
 This is useful for computing large jumps and parallelising simulations for some pseudo-random number generators.
 
-The [`BitMat`][] type supports all the usual interactions between bit-matrices and bit-vectors.
+The [`BitMatrix`][] type supports all the usual interactions between bit-matrices and bit-vectors.
 It also includes methods for computing characteristic polynomials, solving linear systems, and more.
 
 > [!NOTE]
@@ -53,7 +53,7 @@ Here is a simple example of a program that uses `gf2`:
 ```rust
 use gf2::*;
 fn main() {
-    let m: BitMat = BitMat::random(6, 6);
+    let m: BitMatrix = BitMatrix::random(6, 6);
     let c = m.characteristic_polynomial();
     println!("The matrix m:\n{}", m);
     println!("has the characteristic polynomial: c(x) = {}.", c);
@@ -112,7 +112,7 @@ The crate has no dependencies beyond the standard library.
 
 ## Unstable Features
 
-Some APIs (notably the entire [`BitArray`][] type, and the [`BitPoly`][] function-call syntax `p(x)`/`p(M)`) require features that Rust considers "unstable" at the time of writing (though the features have been available for a very long time).
+Some APIs (notably the entire [`BitArray`][] type, and the [`BitPolynomial`][] function-call syntax `p(x)`/`p(M)`) require features that Rust considers "unstable" at the time of writing (though the features have been available for a very long time).
 
 To use those APIs, you can either use stable Rust with the environment variable `RUSTC_BOOTSTRAP` set to `1` or use the nightly Rust compiler.
 
@@ -125,7 +125,7 @@ features = ["unstable"]
 
 or, on the command line, by adding the `--features unstable` flag to `cargo` builds.
 
-If the `unstable` feature is not enabled, the `BitArray` type will not be available, and the `BitPoly` type will not support the function-call syntax `p(x)`/`p(M)`. Instead, you can use the methods `eval_bool`/`eval_matrix` to evaluate polynomials at a bit-vector or bit-matrix argument.
+If the `unstable` feature is not enabled, the `BitArray` type will not be available, and the `BitPolynomial` type will not support the function-call syntax `p(x)`/`p(M)`. Instead, you can use the methods `eval_bool`/`eval_matrix` to evaluate polynomials at a bit-vector or bit-matrix argument.
 
 ## C++ Version
 
@@ -167,7 +167,7 @@ You can use this software under the [MIT License][]
 
 [`BitStore`]: https://docs.rs/gf2/latest/gf2/store/struct.BitStore.html
 [`BitArray`]: https://docs.rs/gf2/latest/gf2/array/struct.BitArray.html
-[`BitVec`]: https://docs.rs/gf2/latest/gf2/vec/struct.BitVec.html
+[`BitVector`]: https://docs.rs/gf2/latest/gf2/vec/struct.BitVector.html
 [`BitSlice`]: https://docs.rs/gf2/latest/gf2/slice/struct.BitSlice.html
-[`BitPoly`]: https://docs.rs/gf2/latest/gf2/poly/struct.BitPoly.html
-[`BitMat`]: https://docs.rs/gf2/latest/gf2/mat/struct.BitMat.html
+[`BitPolynomial`]: https://docs.rs/gf2/latest/gf2/poly/struct.BitPolynomial.html
+[`BitMatrix`]: https://docs.rs/gf2/latest/gf2/mat/struct.BitMatrix.html

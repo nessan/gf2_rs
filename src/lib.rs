@@ -8,7 +8,7 @@
 #![cfg_attr(feature = "unstable", allow(incomplete_features))]
 
 // Most foreign trait implementations for the concrete `BitStore` types are defined using macros to avoid code
-// duplication. Some of the macros are also used by `BitMat` so need to be seen first.
+// duplication. Some of the macros are also used by `BitMatrix` so need to be seen first.
 // The macros themselves are not part of the public API.
 #[macro_use]
 mod store_traits;
@@ -17,7 +17,7 @@ mod store_traits;
 pub mod unsigned;
 pub use unsigned::Unsigned;
 
-// `BitStore` is the core trait for `BitArray`, `BitVec`, and `BitSlice`.
+// `BitStore` is the core trait for `BitArray`, `BitVector`, and `BitSlice`.
 pub mod store;
 pub use store::BitStore;
 
@@ -28,9 +28,9 @@ pub mod array;
 #[cfg(feature = "unstable")]
 pub use array::BitArray;
 
-// `BitVec` is a _dynamically sized_ vector of bits --- a _bit-vector_.
-pub mod vec;
-pub use vec::BitVec;
+// `BitVector` is a _dynamically sized_ vector of bits --- a _bit-vector_.
+pub mod vector;
+pub use vector::BitVector;
 
 // `BitSlice` is a non-owning view of a range of bits within any bit-store --- a _bit-slice_.
 pub mod slice;
@@ -45,13 +45,13 @@ pub use iterators::{
     Words,
 };
 
-// `BitPoly` is a polynomial over GF(2) --- a _bit-polynomial_.
-pub mod poly;
-pub use poly::BitPoly;
+// `BitPolynomial` is a polynomial over GF(2) --- a _bit-polynomial_.
+pub mod polynomial;
+pub use polynomial::BitPolynomial;
 
-// `BitMat` is a _dynamically sized_ matrix of bits --- a _bit-matrix_.
-pub mod mat;
-pub use mat::BitMat;
+// `BitMatrix` is a _dynamically sized_ matrix of bits --- a _bit-matrix_.
+pub mod matrix;
+pub use matrix::BitMatrix;
 
 // `BitGauss` is a Gaussian elimination solver for systems of linear equations over GF(2).
 pub mod gauss;

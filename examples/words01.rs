@@ -12,7 +12,7 @@ fn main() {
 
     // Create a large random bit-vector.
     let len = 1_000_000;
-    let bv: BitVec = BitVec::random(len);
+    let bv: BitVector = BitVector::random(len);
 
     // We will run for lots of trials to get a good average.
     let n_trials = 100_000;

@@ -1,13 +1,13 @@
 #![allow(unused)]
-//! Some alternate/naive implementation of various `BitVec` methods.
+//! Some alternate/naive implementation of various `BitVector` methods.
 //!
 //! # Note
-//! These are typically simpler bit-by-bit implementations of the methods in `BitVec`.
+//! These are typically simpler bit-by-bit implementations of the methods in `BitVector`.
 //! They are used for validity & timing checks.
 use gf2::*;
 
 /// Returns the index of the first set bit in the bit-vector.
-pub fn first_set<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
+pub fn first_set<Word: Unsigned>(bv: &BitVector<Word>) -> Option<usize> {
     let len = bv.len();
     if len == 0 {
         return None;
@@ -21,7 +21,7 @@ pub fn first_set<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
 }
 
 /// Returns the index of the last set bit in the bit-vector.
-pub fn last_set<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
+pub fn last_set<Word: Unsigned>(bv: &BitVector<Word>) -> Option<usize> {
     let len = bv.len();
     if len == 0 {
         return None;
@@ -35,7 +35,7 @@ pub fn last_set<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
 }
 
 /// Returns the index of the next set bit after `index`.
-pub fn next_set<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option<usize> {
+pub fn next_set<Word: Unsigned>(bv: &BitVector<Word>, index: usize) -> Option<usize> {
     let len = bv.len();
     if len == 0 {
         return None;
@@ -49,7 +49,7 @@ pub fn next_set<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option<usize
 }
 
 /// Returns the index of the previous set bit before `index`.
-pub fn previous_set<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option<usize> {
+pub fn previous_set<Word: Unsigned>(bv: &BitVector<Word>, index: usize) -> Option<usize> {
     let len = bv.len();
     if len == 0 || index == 0 {
         return None;
@@ -63,7 +63,7 @@ pub fn previous_set<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option<u
 }
 
 /// Returns the index of the first set bit in the bit-vector.
-pub fn first_unset<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
+pub fn first_unset<Word: Unsigned>(bv: &BitVector<Word>) -> Option<usize> {
     let len = bv.len();
     if len == 0 {
         return None;
@@ -77,7 +77,7 @@ pub fn first_unset<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
 }
 
 /// Returns the index of the last set bit in the bit-vector.
-pub fn last_unset<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
+pub fn last_unset<Word: Unsigned>(bv: &BitVector<Word>) -> Option<usize> {
     let len = bv.len();
     if len == 0 {
         return None;
@@ -91,7 +91,7 @@ pub fn last_unset<Word: Unsigned>(bv: &BitVec<Word>) -> Option<usize> {
 }
 
 /// Returns the index of the previous unset bit before `index`.
-pub fn previous_unset<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option<usize> {
+pub fn previous_unset<Word: Unsigned>(bv: &BitVector<Word>, index: usize) -> Option<usize> {
     let len = bv.len();
     if len == 0 || index == 0 {
         return None;
@@ -105,7 +105,7 @@ pub fn previous_unset<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option
 }
 
 /// Returns the index of the next unset bit after `index`.
-pub fn next_unset<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option<usize> {
+pub fn next_unset<Word: Unsigned>(bv: &BitVector<Word>, index: usize) -> Option<usize> {
     let len = bv.len();
     if len == 0 {
         return None;
@@ -119,7 +119,7 @@ pub fn next_unset<Word: Unsigned>(bv: &BitVec<Word>, index: usize) -> Option<usi
 }
 
 /// Returns a "binary" string representation of a bit-vector.
-pub fn to_binary_string<Word: Unsigned>(bv: &BitVec<Word>) -> String {
+pub fn to_binary_string<Word: Unsigned>(bv: &BitVector<Word>) -> String {
     let len = bv.len();
     if len == 0 {
         return String::new();
@@ -137,7 +137,7 @@ pub fn to_binary_string<Word: Unsigned>(bv: &BitVec<Word>) -> String {
 }
 
 /// Returns a "hex" string representation of a bit-vector.
-pub fn to_hex_string<Word: Unsigned>(bv: &BitVec<Word>) -> String {
+pub fn to_hex_string<Word: Unsigned>(bv: &BitVector<Word>) -> String {
     let len = bv.len();
     if len == 0 {
         return String::new();
@@ -190,7 +190,7 @@ pub fn to_hex_string<Word: Unsigned>(bv: &BitVec<Word>) -> String {
 }
 
 /// Returns a new bit-vector that is a right-shifted version of the input bit-vector.
-pub fn shift_right<Word: Unsigned>(bv: &BitVec<Word>, shift: usize) -> BitVec<Word> {
+pub fn shift_right<Word: Unsigned>(bv: &BitVector<Word>, shift: usize) -> BitVector<Word> {
     let len = bv.len();
 
     // Edge case?
@@ -199,7 +199,7 @@ pub fn shift_right<Word: Unsigned>(bv: &BitVec<Word>, shift: usize) -> BitVec<Wo
     }
 
     // Set up the result as a zero bit-vector of the correct length.
-    let mut result = BitVec::zeros(len);
+    let mut result = BitVector::zeros(len);
 
     // Perhaps we have shifted the whole bit-vector out so the result is all zeros.
     if shift >= len {
@@ -216,7 +216,7 @@ pub fn shift_right<Word: Unsigned>(bv: &BitVec<Word>, shift: usize) -> BitVec<Wo
 }
 
 /// Returns a new bit-vector that is a left-shifted version of the input bit-vector.
-pub fn shift_left<Word: Unsigned>(bv: &BitVec<Word>, shift: usize) -> BitVec<Word> {
+pub fn shift_left<Word: Unsigned>(bv: &BitVector<Word>, shift: usize) -> BitVector<Word> {
     let len = bv.len();
 
     // Edge case?
@@ -225,7 +225,7 @@ pub fn shift_left<Word: Unsigned>(bv: &BitVec<Word>, shift: usize) -> BitVec<Wor
     }
 
     // Set up the result as a zero bit-vector of the correct length.
-    let mut result = BitVec::zeros(len);
+    let mut result = BitVector::zeros(len);
 
     // Perhaps we have shifted the whole bit-vector out so the result is all zeros.
     if shift >= len {
@@ -242,14 +242,14 @@ pub fn shift_left<Word: Unsigned>(bv: &BitVec<Word>, shift: usize) -> BitVec<Wor
 }
 
 /// Computes the convolution of two bit-vectors.
-pub fn convolution<Word: Unsigned>(lhs: &BitVec<Word>, rhs: &BitVec<Word>) -> BitVec<Word> {
+pub fn convolution<Word: Unsigned>(lhs: &BitVector<Word>, rhs: &BitVector<Word>) -> BitVector<Word> {
     // Edge case?
     if lhs.is_empty() || rhs.is_empty() {
-        return BitVec::new();
+        return BitVector::new();
     }
 
     // Set up the result as a zero bit-vector of the correct length.
-    let mut result = BitVec::zeros(lhs.len() + rhs.len() - 1);
+    let mut result = BitVector::zeros(lhs.len() + rhs.len() - 1);
 
     // If either bit-vector is all zeros then the convolution is all zeros.
     if lhs.none() || rhs.none() {
@@ -274,24 +274,24 @@ pub fn convolution<Word: Unsigned>(lhs: &BitVec<Word>, rhs: &BitVec<Word>) -> Bi
 
 // Computes the polynomial r(x) := x^n mod poly(x) for exponent n, where poly(x) is a bit-polynomial.
 // This uses the simplest (and slowest) iterative approach.
-pub fn reduce_x_to_power_n<Word: Unsigned>(poly: &BitPoly<Word>, n: usize) -> BitPoly<Word> {
+pub fn reduce_x_to_power_n<Word: Unsigned>(poly: &BitPolynomial<Word>, n: usize) -> BitPolynomial<Word> {
     // Make a mutable copy and drop any high order zero coefficients.
     let mut poly = poly.clone();
     poly.make_monic();
 
     // Edge case?
     if poly.is_zero() {
-        return BitPoly::zero();
+        return BitPolynomial::zero();
     }
 
     // Edge case: the constant polynomial P(x) := 1. Anything mod 1 is 0.
     if poly.is_one() {
-        return BitPoly::zero();
+        return BitPolynomial::zero();
     }
 
     // Edge case: x^0 = 1 so x^n mod P(x) = 1 for any polynomial P(x) != 1 (we already handled the `P(x) = 1` case).
     if n == 0 {
-        return BitPoly::one();
+        return BitPolynomial::one();
     }
 
     // The polynomial P(x) is non-zero and can be written as P(x) = x^d + p(x) where degree[p] < d.
@@ -300,20 +300,20 @@ pub fn reduce_x_to_power_n<Word: Unsigned>(poly: &BitPoly<Word>, n: usize) -> Bi
     // Edge case: P(x) = x + c where c is a constant => x = P(x) + c.
     // Then for any exponent e: x^e = (P(x) + c)^e = terms in powers of P(x) + c^e => x^e mod P(x) = c^e = c.
     if d == 1 {
-        return BitPoly::constant(poly.coeff(0));
+        return BitPolynomial::constant(poly.coeff(0));
     }
 
     // We can write p(x) = p_0 + p_1 x + ... + p_{d-1} x^{d-1}. All that matters are those coefficients.
-    let p: BitVec<Word> = poly.coefficients().slice(0..d).into();
+    let p: BitVector<Word> = poly.coefficients().slice(0..d).into();
 
     // Small powers n < d:
     if n < d {
-        return BitPoly::x_to_the(n);
+        return BitPolynomial::x_to_the(n);
     }
 
     // Matching power n == d:
     if n == d {
-        return BitPoly::from_coefficients(p);
+        return BitPolynomial::from_coefficients(p);
     }
 
     // Larger powers n > d: Start with r(x) := x^d mod p(x) where r(x) ~ the coefficient bit-vector `result`.
@@ -329,5 +329,5 @@ pub fn reduce_x_to_power_n<Word: Unsigned>(poly: &BitPoly<Word>, n: usize) -> Bi
     }
 
     // Done
-    BitPoly::from_coefficients(result)
+    BitPolynomial::from_coefficients(result)
 }

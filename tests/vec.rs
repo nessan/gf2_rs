@@ -1,7 +1,7 @@
 use gf2::*;
 
 // The type of bit-vector we are testing.
-type BV = BitVec<u8>;
+type BV = BitVector<u8>;
 
 #[test]
 fn test_zeros() {
@@ -160,8 +160,8 @@ fn test_shr() {
 
 #[test]
 fn assign_from_store_copies_between_word_sizes() {
-    let src: BitVec<u8> = BitVec::from_string("1011001110001111").unwrap();
-    let mut dst: BitVec<u32> = BitVec::zeros(src.len());
+    let src: BitVector<u8> = BitVector::from_string("1011001110001111").unwrap();
+    let mut dst: BitVector<u32> = BitVector::zeros(src.len());
 
     dst.copy_store(&src);
 
@@ -170,8 +170,8 @@ fn assign_from_store_copies_between_word_sizes() {
 
 #[test]
 fn assign_from_store_splits_larger_words() {
-    let src: BitVec<u64> = BitVec::from_string("110011001010").unwrap();
-    let mut dst: BitVec<u8> = BitVec::zeros(src.len());
+    let src: BitVector<u64> = BitVector::from_string("110011001010").unwrap();
+    let mut dst: BitVector<u8> = BitVector::zeros(src.len());
 
     dst.copy_store(&src);
 
@@ -180,9 +180,9 @@ fn assign_from_store_splits_larger_words() {
 
 #[test]
 fn assign_from_store_handles_slices() {
-    let src: BitVec<u16> = BitVec::from_string("0001111001111000").unwrap();
+    let src: BitVector<u16> = BitVector::from_string("0001111001111000").unwrap();
     let slice = src.slice(3..13);
-    let mut dst: BitVec<u32> = BitVec::zeros(slice.len());
+    let mut dst: BitVector<u32> = BitVector::zeros(slice.len());
 
     dst.copy_store(&slice);
 

@@ -23,8 +23,8 @@ fn main() {
 
     // Random vector & matrix
     type Word = usize;
-    let mut u: BitVec<Word> = BitVec::random(n);
-    let mat: BitMat<Word> = BitMat::random(n, n);
+    let mut u: BitVector<Word> = BitVector::random(n);
+    let mat: BitMatrix<Word> = BitMatrix::random(n, n);
 
     // To do something in the loop, we count how often the first element from the dot product is 1.
     let mut count: usize = 0;

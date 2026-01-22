@@ -1,4 +1,4 @@
-/// Compare the speed of the naive `to_*_string` implementation to the ones we implemented for `BitVec`
+/// Compare the speed of the naive `to_*_string` implementation to the ones we implemented for `BitVector`
 /// Run in release mode for realistic timings.
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
@@ -10,7 +10,7 @@ mod naive;
 fn compare_bin(n_size: usize, n_trials: usize) {
     let sw = Stopwatch::default();
 
-    type BV = BitVec<usize>;
+    type BV = BitVector<usize>;
     let bv: BV = BV::random(n_size);
 
     let mut s1: String = String::new();
@@ -38,7 +38,7 @@ fn compare_bin(n_size: usize, n_trials: usize) {
 fn compare_hex(n_size: usize, n_trials: usize) {
     let sw = Stopwatch::default();
 
-    type BV = BitVec<usize>;
+    type BV = BitVector<usize>;
     let bv: BV = BV::random(n_size);
 
     let mut s1: String = String::new();

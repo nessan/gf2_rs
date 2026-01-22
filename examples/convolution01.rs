@@ -1,4 +1,4 @@
-/// Compare a naive `convolution` implementation to the `convolved_with` method implemented for `BitVec`.
+/// Compare a naive `convolution` implementation to the `convolved_with` method implemented for `BitVector`.
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
 /// SPDX-License-Identifier: MIT
@@ -9,7 +9,7 @@ use rand::prelude::*;
 use std::io::Write;
 
 fn main() {
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
 
     // Number of trials to run & how often to print progress.
     let n_trials = 1_000;

@@ -1,5 +1,5 @@
 /// Compare the speed of the naive `shift_left` and `shift_right` implementations to the ones we implemented for
-/// `BitVec` Run in release mode for realistic timings.
+/// `BitVector` Run in release mode for realistic timings.
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
 /// SPDX-License-Identifier: MIT
@@ -10,7 +10,7 @@ use std::io::Write;
 use utilities_rs::Stopwatch;
 
 fn main() {
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
 
     // Number of trials to run & how often to print progress.
     let n_trials = 1_000;

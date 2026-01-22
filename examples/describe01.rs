@@ -5,7 +5,7 @@
 use gf2::*;
 
 pub fn main() {
-    let mut bv: BitVec<u8> = BitVec::alternating(20);
+    let mut bv: BitVector<u8> = BitVector::alternating(20);
     println!("Initial bit-vector:");
     println!("{}", bv.describe());
 

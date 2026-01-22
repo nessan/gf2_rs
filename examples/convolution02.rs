@@ -1,4 +1,4 @@
-/// Compare the speed of the naive `convolution` implementation to that of the `BitVec`'s `convolved_with` method.
+/// Compare the speed of the naive `convolution` implementation to that of the `BitVector`'s `convolved_with` method.
 /// Run in release mode for realistic timings.
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
@@ -10,7 +10,7 @@ use std::io::Write;
 use utilities_rs::Stopwatch;
 
 fn main() {
-    type BV = BitVec<u8>;
+    type BV = BitVector<u8>;
 
     // Number of trials to run & how often to print progress.
     let n_trials = 1_000;

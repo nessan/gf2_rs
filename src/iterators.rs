@@ -20,7 +20,7 @@ use std::marker::PhantomData;
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v: BitVec = BitVec::ones(10);
+/// let mut v: BitVector = BitVector::ones(10);
 /// v.set(5, false);
 /// let bits: Vec<bool> = v.bits().collect();
 /// assert_eq!(bits, vec![true, true, true, true, true, false, true, true, true, true]);
@@ -58,7 +58,7 @@ impl<Store: BitStore<Word>, Word: Unsigned> ExactSizeIterator for Bits<'_, Store
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: BitVec = BitVec::ones(15);
+    /// let mut bv: BitVector = BitVector::ones(15);
     /// bv.set(5, false);
     /// let mut iter = bv.bits();
     /// assert_eq!(iter.len(), 15);
@@ -75,7 +75,7 @@ impl<Store: BitStore<Word>, Word: Unsigned> DoubleEndedIterator for Bits<'_, Sto
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: BitVec = BitVec::ones(15);
+    /// let mut bv: BitVector = BitVector::ones(15);
     /// bv.set(0, false);
     /// bv.set(5, false);
     /// bv.set(10, false);
@@ -106,7 +106,7 @@ impl<Store: BitStore<Word>, Word: Unsigned> DoubleEndedIterator for Bits<'_, Sto
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v: BitVec = BitVec::ones(10);
+/// let mut v: BitVector = BitVector::ones(10);
 /// v.set(5, false);
 /// let set_indices: Vec<usize> = v.set_bits().collect();
 /// assert_eq!(set_indices, vec![0, 1, 2, 3, 4, 6, 7, 8, 9]);
@@ -124,7 +124,7 @@ impl<'a, Store: BitStore<Word>, Word: Unsigned> SetBits<'a, Store, Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: BitVec = BitVec::ones(10);
+    /// let mut bv: BitVector = BitVector::ones(10);
     /// bv.set(5, false);
     /// let set_indices: Vec<usize> = bv.set_bits().collect();
     /// assert_eq!(set_indices, vec![0, 1, 2, 3, 4, 6, 7, 8, 9]);
@@ -164,7 +164,7 @@ impl<Store: BitStore<Word>, Word: Unsigned> Iterator for SetBits<'_, Store, Word
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v: BitVec = BitVec::zeros(10);
+/// let mut v: BitVector = BitVector::zeros(10);
 /// v.set(5, true);
 /// let unset_indices: Vec<usize> = v.unset_bits().collect();
 /// assert_eq!(unset_indices, vec![0, 1, 2, 3, 4, 6, 7, 8, 9]);
@@ -182,7 +182,7 @@ impl<'a, Store: BitStore<Word>, Word: Unsigned> UnsetBits<'a, Store, Word> {
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: BitVec = BitVec::zeros(10);
+    /// let mut bv: BitVector = BitVector::zeros(10);
     /// bv.set(5, true);
     /// let unset_indices: Vec<usize> = bv.unset_bits().collect();
     /// assert_eq!(unset_indices, vec![0, 1, 2, 3, 4, 6, 7, 8, 9]);
@@ -225,7 +225,7 @@ impl<Store: BitStore<Word>, Word: Unsigned> Iterator for UnsetBits<'_, Store, Wo
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v: BitVec<u8> = BitVec::ones(10);
+/// let v: BitVector<u8> = BitVector::ones(10);
 /// let words: Vec<u8> = v.store_words().collect();
 /// assert_eq!(words, vec![0b1111_1111_u8, 0b0000_0011_u8]);
 /// let slice = gf2::BitSlice::new(&words, 0, 8);
@@ -268,7 +268,7 @@ impl<Store: BitStore<Word>, Word: Unsigned> ExactSizeIterator for Words<'_, Stor
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: BitVec<u8> = BitVec::ones(125);
+    /// let mut bv: BitVector<u8> = BitVector::ones(125);
     /// let mut iter = bv.store_words();
     /// assert_eq!(iter.len(), 16);
     /// iter.next();
@@ -284,7 +284,7 @@ impl<Store: BitStore<Word>, Word: Unsigned> DoubleEndedIterator for Words<'_, St
     /// # Examples
     /// ```
     /// use gf2::*;
-    /// let mut bv: BitVec<u8> = BitVec::random(125);
+    /// let mut bv: BitVector<u8> = BitVector::random(125);
     /// let mut iter = bv.store_words();
     /// assert_eq!(iter.len(), 16);
     /// for (i, word) in iter.enumerate().rev() {

@@ -4,7 +4,7 @@
 use crate::{
     BitSlice,
     BitStore,
-    BitVec,
+    BitVector,
     Unsigned,
 };
 
@@ -53,9 +53,9 @@ use std::{
 // ====================================================================================================================
 macro_rules! impl_unary_traits {
 
-    // The `BitVec` case which has just the one generic parameter: `Word: Unsigned`.
-    (BitVec) => {
-        impl_unary_traits!(@impl BitVec[Word]; [Word: Unsigned]);
+    // The `BitVector` case which has just the one generic parameter: `Word: Unsigned`.
+    (BitVector) => {
+        impl_unary_traits!(@impl BitVector[Word]; [Word: Unsigned]);
     };
 
     // The `BitSlice` case with an `'a` lifetime parameter as well as the `Word: Unsigned` parameter.
@@ -72,7 +72,7 @@ macro_rules! impl_unary_traits {
     // The other arms funnel to this one which does the actual work of implementing the various foreign traits:
     // This matches on the pattern `$Type[$TypeParams]; [$ImplParams]` where in our case:
     //
-    // $Type:       one of `BitVec`, `BitSlice`, or `BitArray`
+    // $Type:       one of `BitVector`, `BitSlice`, or `BitArray`
     // $TypeParams: some combo of `Word`, `'a, Word`, and `N, Word`.
     // $ImplParams: some combo of `Word: Unsigned`, `'a, Word:Unsigned`, and `const N: usize, Word: Unsigned, const WORDS: usize.
     //
@@ -93,7 +93,7 @@ macro_rules! impl_unary_traits {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v: gf2::BitVec = gf2::BitVec::ones(37);
+/// let mut v: gf2::BitVector = gf2::BitVector::ones(37);
 /// assert_eq!(v[10], true);
 /// v.set(10, false);
 /// assert_eq!(v[10], false);
@@ -121,9 +121,9 @@ impl<$($ImplParams)*> Index<usize> for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v: gf2::BitVec = gf2::BitVec::new();
+/// let v: gf2::BitVector = gf2::BitVector::new();
 /// assert_eq!(format!("{v:b}"), "");
-/// let v: gf2::BitVec = gf2::BitVec::ones(4);
+/// let v: gf2::BitVector = gf2::BitVector::ones(4);
 /// assert_eq!(format!("{v:b}"), "1111");
 /// assert_eq!(format!("{v:#b}"), "0b1111");
 /// ```
@@ -148,7 +148,7 @@ impl<$($ImplParams)*> fmt::Display for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v: gf2::BitVec = gf2::BitVec::ones(10);
+/// let v: gf2::BitVector = gf2::BitVector::ones(10);
 /// assert_eq!(format!("{v:?}"), "1111111111");
 /// ```
 impl<$($ImplParams)*> fmt::Debug for $Type<$($TypeParams)*> {
@@ -168,9 +168,9 @@ impl<$($ImplParams)*> fmt::Debug for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v: gf2::BitVec = gf2::BitVec::new();
+/// let v: gf2::BitVector = gf2::BitVector::new();
 /// assert_eq!(format!("{v:b}"), "");
-/// let v: gf2::BitVec = gf2::BitVec::ones(4);
+/// let v: gf2::BitVector = gf2::BitVector::ones(4);
 /// assert_eq!(format!("{v:b}"), "1111");
 /// assert_eq!(format!("{v:#b}"), "0b1111");
 /// ```
@@ -207,9 +207,9 @@ impl<$($ImplParams)*> fmt::Binary for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v: gf2::BitVec = gf2::BitVec::new();
+/// let v: gf2::BitVector = gf2::BitVector::new();
 /// assert_eq!(format!("{v:X}"), "");
-/// let v: gf2::BitVec = gf2::BitVec::ones(4);
+/// let v: gf2::BitVector = gf2::BitVector::ones(4);
 /// assert_eq!(format!("{v:X}"), "F");
 /// assert_eq!(format!("{v:#X}"), "0XF");
 /// ```
@@ -245,9 +245,9 @@ impl<$($ImplParams)*> fmt::UpperHex for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v: gf2::BitVec = gf2::BitVec::new();
+/// let v: gf2::BitVector = gf2::BitVector::new();
 /// assert_eq!(format!("{v:x}"), "");
-/// let v: gf2::BitVec = gf2::BitVec::ones(4);
+/// let v: gf2::BitVector = gf2::BitVector::ones(4);
 /// assert_eq!(format!("{v:x}"), "f");
 /// assert_eq!(format!("{v:#x}"), "0xf");
 /// ```
@@ -277,7 +277,7 @@ impl<$($ImplParams)*> fmt::LowerHex for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut bv: gf2::BitVec = gf2::BitVec::ones(10);
+/// let mut bv: gf2::BitVector = gf2::BitVector::ones(10);
 /// bv <<= 3;
 /// assert_eq!(bv.to_string(), "1111111000");
 /// ```
@@ -296,7 +296,7 @@ impl<$($ImplParams)*> ShlAssign<usize> for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut bv: gf2::BitVec = gf2::BitVec::ones(10);
+/// let mut bv: gf2::BitVector = gf2::BitVector::ones(10);
 /// bv >>= 3;
 /// assert_eq!(bv.to_string(), "0001111111");
 /// ```
@@ -316,7 +316,7 @@ impl<$($ImplParams)*> ShrAssign<usize> for $Type<$($TypeParams)*> {
 //
 // Types which are consumed are handled by code like:
 // ```
-// let mut result: BitVec<Word> = self.into();  <1>
+// let mut result: BitVector<Word> = self.into();  <1>
 // result <<= shift;                            <2>
 // result
 // ```
@@ -326,7 +326,7 @@ impl<$($ImplParams)*> ShrAssign<usize> for $Type<$($TypeParams)*> {
 //
 // References which are not consumed are handled by code like:
 // ```
-// let mut result: BitVec<Word> = self.clone().into();  <1>
+// let mut result: BitVector<Word> = self.clone().into();  <1>
 // result <<= shift;                                    <2>
 // result
 // ```
@@ -342,7 +342,7 @@ impl<$($ImplParams)*> ShrAssign<usize> for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v1: gf2::BitVec = gf2::BitVec::ones(10);
+/// let v1: gf2::BitVector = gf2::BitVector::ones(10);
 /// let v2  = &v1 << 3;
 /// assert_eq!(v1.to_string(), "1111111111");
 /// assert_eq!(v2.to_string(), "1111111000");
@@ -353,7 +353,7 @@ impl<$($ImplParams)*> ShrAssign<usize> for $Type<$($TypeParams)*> {
 /// assert_eq!(s2.to_string(), "1111111");
 /// ```
 impl<$($ImplParams)*> Shl<usize> for &$Type<$($TypeParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn shl(self, shift: usize) -> Self::Output { self.left_shifted(shift) }
 }
 
@@ -364,7 +364,7 @@ impl<$($ImplParams)*> Shl<usize> for &$Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v1: gf2::BitVec = gf2::BitVec::ones(10);
+/// let v1: gf2::BitVector = gf2::BitVector::ones(10);
 /// let v2  = v1 << 3;
 /// assert_eq!(v2.to_string(), "1111111000");
 /// let s2 = v2.slice(0..7);
@@ -373,7 +373,7 @@ impl<$($ImplParams)*> Shl<usize> for &$Type<$($TypeParams)*> {
 /// assert_eq!(v3.to_string(), "1111000");
 /// ```
 impl<$($ImplParams)*> Shl<usize> for $Type<$($TypeParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn shl(self, shift: usize) -> Self::Output { self.left_shifted(shift) }
 }
 
@@ -389,7 +389,7 @@ impl<$($ImplParams)*> Shl<usize> for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v1: gf2::BitVec = gf2::BitVec::ones(10);
+/// let v1: gf2::BitVector = gf2::BitVector::ones(10);
 /// let v2  = &v1 >> 3;
 /// assert_eq!(v1.to_string(), "1111111111");
 /// assert_eq!(v2.to_string(), "0001111111");
@@ -400,7 +400,7 @@ impl<$($ImplParams)*> Shl<usize> for $Type<$($TypeParams)*> {
 /// assert_eq!(s2.to_string(), "0001111");
 /// ```
 impl<$($ImplParams)*> Shr<usize> for &$Type<$($TypeParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn shr(self, shift: usize) -> Self::Output { self.right_shifted(shift) }
 }
 
@@ -415,7 +415,7 @@ impl<$($ImplParams)*> Shr<usize> for &$Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let v1: gf2::BitVec = gf2::BitVec::ones(10);
+/// let v1: gf2::BitVector = gf2::BitVector::ones(10);
 /// let v2  = v1 >> 3;
 /// assert_eq!(v2.to_string(), "0001111111");
 /// let s2 = v2.slice(0..7);
@@ -424,7 +424,7 @@ impl<$($ImplParams)*> Shr<usize> for &$Type<$($TypeParams)*> {
 /// assert_eq!(v3.to_string(), "0000001");
 /// ```
 impl<$($ImplParams)*> Shr<usize> for $Type<$($TypeParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn shr(self, shift: usize) -> Self::Output { self.right_shifted(shift) }
 }
 
@@ -433,13 +433,13 @@ impl<$($ImplParams)*> Shr<usize> for $Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let u: gf2::BitVec = gf2::BitVec::ones(3);
+/// let u: gf2::BitVector = gf2::BitVector::ones(3);
 /// let v = !&u;
 /// assert_eq!(u.to_binary_string(), "111");
 /// assert_eq!(v.to_binary_string(), "000");
 /// ```
 impl<$($ImplParams)*> Not for &$Type<$($TypeParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn not(self) -> Self::Output { self.flipped() }
 }
 
@@ -448,12 +448,12 @@ impl<$($ImplParams)*> Not for &$Type<$($TypeParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let u: gf2::BitVec = gf2::BitVec::ones(3);
+/// let u: gf2::BitVector = gf2::BitVector::ones(3);
 /// let v = !u;
 /// assert_eq!(v.to_binary_string(), "000");
 /// ```
 impl<$($ImplParams)*> Not for $Type<$($TypeParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn not(self) -> Self::Output { self.flipped() }
 }
 
@@ -479,24 +479,24 @@ impl<$($ImplParams)*> Not for $Type<$($TypeParams)*> {
 // ====================================================================================================================
 macro_rules! impl_binary_traits {
 
-    // The `BitVec-BitVec` case which has just the one generic parameter: `Word: Unsigned`.
-    (BitVec, BitVec) => {
-        impl_binary_traits!(@impl BitVec[Word]; BitVec[Word]; [Word: Unsigned]);
+    // The `BitVector-BitVector` case which has just the one generic parameter: `Word: Unsigned`.
+    (BitVector, BitVector) => {
+        impl_binary_traits!(@impl BitVector[Word]; BitVector[Word]; [Word: Unsigned]);
     };
 
-    // The `BitVec-BitSlice` case which adds a lifetime parameter for the `BitSlice`.
-    (BitVec, BitSlice) => {
-        impl_binary_traits!(@impl BitVec[Word]; BitSlice['a, Word]; ['a, Word: Unsigned]);
+    // The `BitVector-BitSlice` case which adds a lifetime parameter for the `BitSlice`.
+    (BitVector, BitSlice) => {
+        impl_binary_traits!(@impl BitVector[Word]; BitSlice['a, Word]; ['a, Word: Unsigned]);
     };
 
-    // The `BitVec-BitArray` case which adds const generic parameters for the `BitArray`.
-    (BitVec, BitArray) => {
-        impl_binary_traits!(@impl BitVec[Word]; BitArray[N, Word, WORDS]; [const N: usize, Word: Unsigned, const WORDS: usize]);
+    // The `BitVector-BitArray` case which adds const generic parameters for the `BitArray`.
+    (BitVector, BitArray) => {
+        impl_binary_traits!(@impl BitVector[Word]; BitArray[N, Word, WORDS]; [const N: usize, Word: Unsigned, const WORDS: usize]);
     };
 
-    // The `BitSlice-BitVec` case which has two generic parameters: `'a` and `Word: Unsigned`.
-    (BitSlice, BitVec) => {
-        impl_binary_traits!(@impl BitSlice['a, Word]; BitVec[Word]; ['a, Word: Unsigned]);
+    // The `BitSlice-BitVector` case which has two generic parameters: `'a` and `Word: Unsigned`.
+    (BitSlice, BitVector) => {
+        impl_binary_traits!(@impl BitSlice['a, Word]; BitVector[Word]; ['a, Word: Unsigned]);
     };
 
     // The `BitSlice-BitSlice` case which adds a second lifetime parameter for the rhs `BitSlice`.
@@ -509,9 +509,9 @@ macro_rules! impl_binary_traits {
         impl_binary_traits!(@impl BitSlice['a, Word]; BitArray[N, Word, WORDS]; ['a, const N: usize, Word: Unsigned, const WORDS: usize]);
     };
 
-    // The `BitArray-BitVec` case which has the generic parameters for the `BitArray` as the `Word` type is shared.
-    (BitArray, BitVec) => {
-        impl_binary_traits!(@impl BitArray[N, Word, WORDS]; BitVec[Word]; [const N: usize, Word: Unsigned, const WORDS: usize]);
+    // The `BitArray-BitVector` case which has the generic parameters for the `BitArray` as the `Word` type is shared.
+    (BitArray, BitVector) => {
+        impl_binary_traits!(@impl BitArray[N, Word, WORDS]; BitVector[Word]; [const N: usize, Word: Unsigned, const WORDS: usize]);
     };
 
     // The `BitArray-BitSlice` case which adds a lifetime parameter for the `BitSlice`.
@@ -527,9 +527,9 @@ macro_rules! impl_binary_traits {
     // The other arms funnel to this one which does the actual work of implementing the various foreign traits:
     // This matches on the pattern `$Type[$TypeParams]; [$ImplParams]` where in our case:
     //
-    // $LhsType:    one of `BitVec`, `BitSlice`, or `BitArray`
+    // $LhsType:    one of `BitVector`, `BitSlice`, or `BitArray`
     // $LhsParams:  one of `Word`, `'a, Word`, or `N, Word, WORDS`.
-    // $RhsType:    one of `BitVec`, `BitSlice`, or `BitArray`
+    // $RhsType:    one of `BitVector`, `BitSlice`, or `BitArray`
     // $RhsParams:  one of `Word`, `a, Word`, `'b, Word`, or `N, Word, WORDS`.
     // $ImplParams: some combo of `Word: Unsigned`, `'a`, `b`, `const N: usize, const WORDS: usize.
     //
@@ -553,8 +553,8 @@ macro_rules! impl_binary_traits {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
 /// v1 ^= &v2;
 /// assert_eq!(v1.to_string(), "1111111111");
 /// assert_eq!(v2.to_string(), "0101010101");
@@ -571,8 +571,8 @@ impl<$($ImplParams)*> BitXorAssign<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// v1 ^= gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// v1 ^= gf2::BitVector::from_string("0101010101").unwrap();
 /// assert_eq!(v1.to_string(), "1111111111");
 /// ```
 impl<$($ImplParams)*> BitXorAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
@@ -587,8 +587,8 @@ impl<$($ImplParams)*> BitXorAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
 /// v1 &= &v2;
 /// assert_eq!(v1.to_string(), "0000000000");
 /// assert_eq!(v2.to_string(), "0101010101");
@@ -605,8 +605,8 @@ impl<$($ImplParams)*> BitAndAssign<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// v1 &= gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// v1 &= gf2::BitVector::from_string("0101010101").unwrap();
 /// assert_eq!(v1.to_string(), "0000000000");
 /// ```
 impl<$($ImplParams)*> BitAndAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
@@ -621,8 +621,8 @@ impl<$($ImplParams)*> BitAndAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
 /// v1 |= &v2;
 /// assert_eq!(v1.to_string(), "1111111111");
 /// assert_eq!(v2.to_string(), "0101010101");
@@ -639,8 +639,8 @@ impl<$($ImplParams)*> BitOrAssign<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// v1 |= gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// v1 |= gf2::BitVector::from_string("0101010101").unwrap();
 /// assert_eq!(v1.to_string(), "1111111111");
 /// ```
 impl<$($ImplParams)*> BitOrAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
@@ -668,8 +668,8 @@ impl<$($ImplParams)*> BitOrAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*>
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
 /// v1 += &v2;
 /// assert_eq!(v1.to_string(), "1111111111");
 /// assert_eq!(v2.to_string(), "0101010101");
@@ -689,8 +689,8 @@ impl<$($ImplParams)*> AddAssign<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> 
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// v1 += gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// v1 += gf2::BitVector::from_string("0101010101").unwrap();
 /// assert_eq!(v1.to_string(), "1111111111");
 /// ```
 impl<$($ImplParams)*> AddAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
@@ -708,8 +708,8 @@ impl<$($ImplParams)*> AddAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// let v2: gf2::BitVec = gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// let v2: gf2::BitVector = gf2::BitVector::from_string("0101010101").unwrap();
 /// v1 -= &v2;
 /// assert_eq!(v1.to_string(), "1111111111");
 /// assert_eq!(v2.to_string(), "0101010101");
@@ -729,8 +729,8 @@ impl<$($ImplParams)*> SubAssign<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> 
 /// # Examples
 /// ```
 /// use gf2::*;
-/// let mut v1: gf2::BitVec = gf2::BitVec::from_string("1010101010").unwrap();
-/// v1 -= gf2::BitVec::from_string("0101010101").unwrap();
+/// let mut v1: gf2::BitVector = gf2::BitVector::from_string("1010101010").unwrap();
+/// v1 -= gf2::BitVector::from_string("0101010101").unwrap();
 /// assert_eq!(v1.to_string(), "1111111111");
 /// ```
 impl<$($ImplParams)*> SubAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
@@ -754,7 +754,7 @@ impl<$($ImplParams)*> SubAssign<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitXor<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitxor(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.xor(rhs) }
 }
 
@@ -763,7 +763,7 @@ impl<$($ImplParams)*> BitXor<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitXor<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitxor(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.xor(rhs) }
 }
 
@@ -772,7 +772,7 @@ impl<$($ImplParams)*> BitXor<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitXor<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitxor(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.xor(&rhs) }
 }
 
@@ -781,7 +781,7 @@ impl<$($ImplParams)*> BitXor<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitXor<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitxor(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.xor(&rhs) }
 }
 
@@ -790,7 +790,7 @@ impl<$($ImplParams)*> BitXor<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitAnd<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitand(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.and(rhs) }
 }
 
@@ -799,7 +799,7 @@ impl<$($ImplParams)*> BitAnd<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitAnd<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitand(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.and(rhs) }
 }
 
@@ -808,7 +808,7 @@ impl<$($ImplParams)*> BitAnd<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitAnd<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitand(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.and(&rhs) }
 }
 
@@ -817,7 +817,7 @@ impl<$($ImplParams)*> BitAnd<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitAnd<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitand(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.and(&rhs) }
 }
 
@@ -826,7 +826,7 @@ impl<$($ImplParams)*> BitAnd<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitOr<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitor(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.or(rhs) }
 }
 
@@ -835,7 +835,7 @@ impl<$($ImplParams)*> BitOr<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitOr<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitor(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.or(rhs) }
 }
 
@@ -844,7 +844,7 @@ impl<$($ImplParams)*> BitOr<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitOr<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitor(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.or(&rhs) }
 }
 
@@ -853,7 +853,7 @@ impl<$($ImplParams)*> BitOr<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> BitOr<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn bitor(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.or(&rhs) }
 }
 
@@ -878,7 +878,7 @@ impl<$($ImplParams)*> BitOr<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Add<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn add(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.xor(rhs) }
 }
 
@@ -889,7 +889,7 @@ impl<$($ImplParams)*> Add<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Add<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn add(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.xor(rhs) }
 }
 
@@ -900,7 +900,7 @@ impl<$($ImplParams)*> Add<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Add<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn add(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.xor(&rhs) }
 }
 
@@ -911,7 +911,7 @@ impl<$($ImplParams)*> Add<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Add<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn add(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.xor(&rhs) }
 }
 
@@ -922,7 +922,7 @@ impl<$($ImplParams)*> Add<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Sub<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn sub(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.xor(rhs) }
 }
 
@@ -933,7 +933,7 @@ impl<$($ImplParams)*> Sub<&$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Sub<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn sub(self, rhs: &$Rhs<$($RhsParams)*>) -> Self::Output { self.xor(rhs) }
 }
 
@@ -944,7 +944,7 @@ impl<$($ImplParams)*> Sub<&$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Sub<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn sub(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.xor(&rhs) }
 }
 
@@ -955,7 +955,7 @@ impl<$($ImplParams)*> Sub<$Rhs<$($RhsParams)*>> for &$Lhs<$($LhsParams)*> {
 /// # Panics
 /// This method panics if the lengths of the input operands do not match.
 impl<$($ImplParams)*> Sub<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
-    type Output = BitVec<Word>;
+    type Output = BitVector<Word>;
     #[inline] fn sub(self, rhs: $Rhs<$($RhsParams)*>) -> Self::Output { self.xor(&rhs) }
 }
 
@@ -1005,8 +1005,8 @@ impl<$($ImplParams)*> Mul<$Rhs<$($RhsParams)*>> for $Lhs<$($LhsParams)*> {
 // Invoke the `impl_unary_traits` macro to implement common foreign traits for individual concrete bit-store types.
 // ====================================================================================================================
 
-// Implement for BitVec, BitSlice, and BitArray.
-impl_unary_traits!(BitVec);
+// Implement for BitVector, BitSlice, and BitArray.
+impl_unary_traits!(BitVector);
 impl_unary_traits!(BitSlice);
 #[cfg(feature = "unstable")]
 impl_unary_traits!(BitArray);
@@ -1015,21 +1015,21 @@ impl_unary_traits!(BitArray);
 // Invoke the `impl_binary_traits` macro to implement common foreign traits for pairs of concrete bit-store types.
 // ====================================================================================================================
 
-// BitVec with other bit-store types.
-impl_binary_traits!(BitVec, BitVec);
-impl_binary_traits!(BitVec, BitSlice);
+// BitVector with other bit-store types.
+impl_binary_traits!(BitVector, BitVector);
+impl_binary_traits!(BitVector, BitSlice);
 #[cfg(feature = "unstable")]
-impl_binary_traits!(BitVec, BitArray);
+impl_binary_traits!(BitVector, BitArray);
 
 // BitSlice with other bit-store types.
-impl_binary_traits!(BitSlice, BitVec);
+impl_binary_traits!(BitSlice, BitVector);
 impl_binary_traits!(BitSlice, BitSlice);
 #[cfg(feature = "unstable")]
 impl_binary_traits!(BitSlice, BitArray);
 
 // BitArray with other bit-store types.
 #[cfg(feature = "unstable")]
-impl_binary_traits!(BitArray, BitVec);
+impl_binary_traits!(BitArray, BitVector);
 #[cfg(feature = "unstable")]
 impl_binary_traits!(BitArray, BitSlice);
 #[cfg(feature = "unstable")]

@@ -4,11 +4,11 @@
 
 The library's vector-like types implement the `BitStore` trait:
 
-| Type         | Description                                                                             |
-| ------------ | --------------------------------------------------------------------------------------- |
-| [`BitArray`] | A fixed-size vector of bits (requires compilation with the `unstable` feature enabled). |
-| [`BitVec`]   | A dynamically-sized vector of bits.                                                     |
-| [`BitSlice`] | A non-owning view into contiguous ranges of bits.                                       |
+| Type          | Description                                                                             |
+| ------------- | --------------------------------------------------------------------------------------- |
+| [`BitArray`]  | A fixed-size vector of bits (requires compilation with the `unstable` feature enabled). |
+| [`BitVector`] | A dynamically-sized vector of bits.                                                     |
+| [`BitSlice`]  | A non-owning view into contiguous ranges of bits.                                       |
 
 These types own or view individual bit elements packed into some underlying "store" of [`Unsigned`] words.
 The particular choice of `Word` is generic and user selectable from one of the primitive unsigned integer types.
@@ -25,7 +25,7 @@ Operations on and between bit-stores work on a whole-word basis, so are inherent
 <div style="font-size: 48px; margin-right: 12px; color: #666;">📝</div>
 
 Users typically will not use this trait directly -- it's an implementation detail to avoid code duplication.
-Instead, they will create and use [`BitArray`] and [`BitVec`] objects, and _slices_ from those bit-vectors.
+Instead, they will create and use [`BitArray`] and [`BitVector`] objects, and _slices_ from those bit-vectors.
 Those concrete types _inherit_ the dozens of methods provided by this trait.
 
 </div>
@@ -64,12 +64,12 @@ Having optimised versions of the `word` and `set_word` methods has an even large
 
 ### Example
 
-The methods are trivial to implement for [`BitArray`] and [`BitVec`].
+The methods are trivial to implement for [`BitArray`] and [`BitVector`].
 
-Here is a _sketch_ of how they might work for the `BitVec` type, which stores `m_len` bits in a `Vec<Word>` called `m_store`:
+Here is a _sketch_ of how they might work for the `BitVector` type, which stores `m_len` bits in a `Vec<Word>` called `m_store`:
 
 ```c++
-impl<Word: Unsigned> BitStore<Word> for BitVec<Word> {
+impl<Word: Unsigned> BitStore<Word> for BitVector<Word> {
     fn len(&self) -> usize                 { self.m_len }
     fn store(&self) -> &[Word]             { self.m_store.as_slice() }
     fn store_mut(&mut self) -> &mut [Word] { self.m_store.as_mut_slice() }
@@ -222,7 +222,7 @@ The following methods let you populate the entire store from multiple sources in
 ### Copies
 
 - In each case, the _size_ of the source and destinations must match exactly! You can always use a [`BitSlice`] to change/copy a subset of bits if needed.
-- However, the underlying _word types_ need **not** match, so you can copy between bit-stores that use different underlying word types. You can use the [`BitStore::copy_store`] method to convert between different `Word` type stores (e.g., from `BitVec<u32>` to `BitVec<u8>`) as long as the size of the source and destinations match.
+- However, the underlying _word types_ need **not** match, so you can copy between bit-stores that use different underlying word types. You can use the [`BitStore::copy_store`] method to convert between different `Word` type stores (e.g., from `BitVector<u32>` to `BitVector<u8>`) as long as the size of the source and destinations match.
 
 ### Random Fills
 
@@ -248,7 +248,7 @@ The following methods create or fill _independent_ bit-vectors with copies of so
 
 | Method                      | Description                                                                              |
 | --------------------------- | ---------------------------------------------------------------------------------------- |
-| [`BitStore::sub`]           | Returns a new [`BitVec`] encompassing the bits in a half-open range.                     |
+| [`BitStore::sub`]           | Returns a new [`BitVector`] encompassing the bits in a half-open range.                  |
 | [`BitStore::split_at_into`] | Fills two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`.           |
 | [`BitStore::split_at`]      | Returns two new two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`. |
 
@@ -475,7 +475,7 @@ The simplest case is where a foreign trait acts on a single bit-store type:
 The [`std::ops::Not`] trait is implemented for each concrete bit-store both by value and by reference.
 
 Our `impl_unary_traits!` macro implements these foreign traits for any _concrete_ bit-store type.
-For example, we can invoke `impl_unary_traits!(BitVec)` to implement all these traits for the `BitVec` type.
+For example, we can invoke `impl_unary_traits!(BitVector)` to implement all these traits for the `BitVector` type.
 
 ## Foreign Traits for Pairs of Bit-Stores
 
@@ -496,34 +496,34 @@ Other foreign traits act on _pairs_ of bit-store types:
 | [`std::ops::Mul`]          | Forwarded to [`BitStore::dot`]      |
 
 Our `impl_binary_traits!` macro implements these foreign traits for any _concrete pair_ of bit-store types.
-For example, we can invoke `impl_binary_traits!(BitVec, BitSlice)` to implement all these traits for the `BitVec` type interacting with a `BitSlice` type.
+For example, we can invoke `impl_binary_traits!(BitVector, BitSlice)` to implement all these traits for the `BitVector` type interacting with a `BitSlice` type.
 
-Moreover, the macro implements the traits for all combinations of references and values for the two types, so `impl_binary_traits!(BitVec, BitSlice)` implements the traits for the following pairs:
+Moreover, the macro implements the traits for all combinations of references and values for the two types, so `impl_binary_traits!(BitVector, BitSlice)` implements the traits for the following pairs:
 
-- `BitVec` and `BitSlice`
-- `&BitVec` and `BitSlice`
-- `BitVec` and `&BitSlice`
-- `&BitVec` and `&BitSlice`
+- `BitVector` and `BitSlice`
+- `&BitVector` and `BitSlice`
+- `BitVector` and `&BitSlice`
+- `&BitVector` and `&BitSlice`
 
 This includes all combinations of the two types being passed by either by value or by reference.
-For example, if `u` and `v` are two `BitVec` instances, then the following expressions will all work:
+For example, if `u` and `v` are two `BitVector` instances, then the following expressions will all work:
 
 ```rust
 use gf2::*;
-let u: BitVec = BitVec::random(10);
-let v: BitVec = BitVec::random(10);
-let a = &u + &v;    // `a` is a new `BitVec`; `u` and `v` are both preserved.
-let b = &u + v;     // `b` is a new `BitVec`; we cannot use `v` again.
-let c = u + &b;     // `c` is a new `BitVec`; we cannot use `u` again.
-let d = b + c;      // `d` is a new `BitVec`; we cannot use either `b` or `c` again.
+let u: BitVector = BitVector::random(10);
+let v: BitVector = BitVector::random(10);
+let a = &u + &v;    // `a` is a new `BitVector`; `u` and `v` are both preserved.
+let b = &u + v;     // `b` is a new `BitVector`; we cannot use `v` again.
+let c = u + &b;     // `c` is a new `BitVector`; we cannot use `u` again.
+let d = b + c;      // `d` is a new `BitVector`; we cannot use either `b` or `c` again.
 ```
 
 This is very different from C++, where operator overloads are typically defined to preserve both arguments.
 
 ```cpp
-auto u = gf2::BitVec::random(10);
-auto v = gf2::BitVec::random(10);
-auto a = u + v;     // `a` is a new `BitVec`; `u` and `v` are both preserved.
+auto u = gf2::BitVector::random(10);
+auto v = gf2::BitVector::random(10);
+auto a = u + v;     // `a` is a new `BitVector`; `u` and `v` are both preserved.
 ```
 
 In C++, you don't have to write `a = &u + &v` to preserve both operands, instead, you just write `a = u + v` with no ampersands.
@@ -535,7 +535,7 @@ The macros are lengthy but straightforward, with a few arms that funnel to a sin
 
 The one twist is that while all of our bit-store types have a generic `Word: Unsigned` parameter, some types have an extra generic parameter (a lifetime for `BitSlice`, and a `const N: usize` for `BitArray`).
 
-- `BitVec<Word>` has a single generic parameter.
+- `BitVector<Word>` has a single generic parameter.
 - `BitSlice<'a, Word>` has two generic parameters, the first of which is a lifetime.
 - `BitArray<const N, Word>` has two generic parameters, the first of which is `const usize`.
 
@@ -544,7 +544,7 @@ Handling the existence/non-existence of these extra generic parameters is the ma
 <!-- Internal Reference Links -->
 
 [`BitArray`]: crate::BitArray
-[`BitVec`]: crate::BitVec
+[`BitVector`]: crate::BitVector
 [`BitSlice`]: crate::BitSlice
 [`Unsigned`]: crate::Unsigned
 

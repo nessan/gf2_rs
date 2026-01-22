@@ -145,14 +145,14 @@ The following methods let you mutate the entire bit-array in a single call.
 
 The following methods let you populate the entire bit-array from multiple sources in a single call.
 
-| Method                                  | Description                                                  |
-| --------------------------------------- | ------------------------------------------------------------ |
-| [`BitStore::copy_unsigned`]             | Copies bit values from any unsigned value to this bit-array. |
-| [`BitStore::copy_store`]                | Copies bit values from any source bit-store to this bit-array. |
-| [`BitStore::copy_fn`]                   | Copies bit values from a function that returns a boolean for an index. |
-| [`BitStore::fill_random_biased_seeded`] | Very general method to fill the bit-array with random 0's and 1's. |
+| Method                                  | Description                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------ |
+| [`BitStore::copy_unsigned`]             | Copies bit values from any unsigned value to this bit-array.                         |
+| [`BitStore::copy_store`]                | Copies bit values from any source bit-store to this bit-array.                       |
+| [`BitStore::copy_fn`]                   | Copies bit values from a function that returns a boolean for an index.               |
+| [`BitStore::fill_random_biased_seeded`] | Very general method to fill the bit-array with random 0's and 1's.                   |
 | [`BitStore::fill_random_biased`]        | Fill the bit-array with random 0's and 1's, where the RNG itself is randomly seeded. |
-| [`BitStore::fill_random`]               | Fill the bit-array with random 0's and 1's from flips of a _fair_ coin. |
+| [`BitStore::fill_random`]               | Fill the bit-array with random 0's and 1's from flips of a _fair_ coin.              |
 
 ## Slices (Inherited)
 
@@ -169,7 +169,7 @@ The following methods create or fill _independent_ bit-vectors with copies of so
 
 | Method                      | Description                                                                              |
 | --------------------------- | ---------------------------------------------------------------------------------------- |
-| [`BitStore::sub`]           | Returns a new [`BitVec`] encompassing the bits in a half-open range.                     |
+| [`BitStore::sub`]           | Returns a new [`BitVector`] encompassing the bits in a half-open range.                  |
 | [`BitStore::split_at_into`] | Fills two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`.           |
 | [`BitStore::split_at`]      | Returns two new two bit-vectors with the bits in the ranges `[0, at)` and `[at, len())`. |
 
@@ -311,7 +311,7 @@ We have implemented several foreign traits from the standard library for bit-vec
 
 <!-- Internal Reference Links -->
 
-[`BitVec`]: crate::BitVec
+[`BitVector`]: crate::BitVector
 [`BitSlice`]: crate::BitSlice
 [`Unsigned`]: crate::Unsigned
 [`Bits`]: crate::Bits

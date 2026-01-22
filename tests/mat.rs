@@ -1,11 +1,11 @@
 #[test]
 fn test_inverse() {
     let n = 50;
-    let identity = gf2::BitMat::identity(n);
+    let identity = gf2::BitMatrix::identity(n);
     let mut trial = 1;
     let max_trials = 100;
     loop {
-        let m: gf2::BitMat<u8> = gf2::BitMat::random(n, n);
+        let m: gf2::BitMatrix<u8> = gf2::BitMatrix::random(n, n);
         if let Some(inv) = m.inverse() {
             assert_eq!(&m * &inv, identity);
             break;

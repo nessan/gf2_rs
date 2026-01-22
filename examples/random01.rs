@@ -1,4 +1,4 @@
-/// Create lots of "random" `BitVec`s and check the number of set bits is roughly as expected.
+/// Create lots of "random" `BitVector`s and check the number of set bits is roughly as expected.
 /// Run in release mode for realistic timings.
 ///
 /// SPDX-FileCopyrightText:  2025 Nessan Fitzmaurice <nzznfitz+gh@icloud.com>
@@ -10,7 +10,7 @@ use utilities_rs::Pretty;
 ///
 /// Returns the relative error between the number of set bits and the expected number of set bits.
 fn test_random_bit_vector(n_size: usize) -> f64 {
-    let bv: BitVec = BitVec::random(n_size);
+    let bv: BitVector = BitVector::random(n_size);
     let n_set = bv.count_ones() as f64;
     let expected = n_size as f64 / 2.0;
     let error = (n_set - expected).abs() / expected;

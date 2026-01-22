@@ -13,7 +13,7 @@ use std::io::Write;
 use utilities_rs::Stopwatch;
 
 fn main() {
-    type Mat = BitMat<u8>;
+    type Mat = BitMatrix<u8>;
 
     let n = 500;
 

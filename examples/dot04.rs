@@ -23,8 +23,8 @@ fn main() {
 
     // Random matrices
     type Word = usize;
-    let mut m0: BitMat<Word> = BitMat::random(n, n);
-    let m1: BitMat<Word> = BitMat::random(n, n);
+    let mut m0: BitMatrix<Word> = BitMatrix::random(n, n);
+    let m1: BitMatrix<Word> = BitMatrix::random(n, n);
 
     // To do something in the loop, we count how often the top-right element from the product is 1.
     let mut count: usize = 0;

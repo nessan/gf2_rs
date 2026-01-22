@@ -12,7 +12,7 @@ fn main() {
 
     // Create a bit-vector with a single set bit at the very end...
     let len = 1_000_000;
-    let mut bv: BitVec = BitVec::zeros(len);
+    let mut bv: BitVector = BitVector::zeros(len);
     bv.set(len - 1, true);
 
     let mut result: Option<usize> = None;

@@ -66,17 +66,17 @@ fn main() {
         let coeffs_string = &pair[1];
 
         // Parse matrix
-        let m = BitMat::<usize>::from_string(matrix_string).unwrap_or_else(|| {
+        let m = BitMatrix::<usize>::from_string(matrix_string).unwrap_or_else(|| {
             eprintln!("Failed to parse a bit-matrix from file: '{}'", data_file_path);
             std::process::exit(1);
         });
 
         // Parse coefficients -> polynomial
-        let coeffs = BitVec::<usize>::from_string(coeffs_string).unwrap_or_else(|| {
+        let coeffs = BitVector::<usize>::from_string(coeffs_string).unwrap_or_else(|| {
             eprintln!("Failed to parse a characteristic polynomial from file: '{}'", data_file_path);
             std::process::exit(2);
         });
-        let canned = BitPoly::<usize>::from_coefficients(coeffs);
+        let canned = BitPolynomial::<usize>::from_coefficients(coeffs);
 
         // Progress message.
         num_tests += 1;

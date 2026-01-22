@@ -17,7 +17,7 @@ fn main() {
         print!("Trial {}: ", trial.pretty());
 
         // Create a random bit-vector ...
-        let bv: BitVec = BitVec::random_biased(len, prob);
+        let bv: BitVector = BitVector::random_biased(len, prob);
 
         // We will count the number of set bits one-by-one naively ...
         let mut n_set = 0;
@@ -53,7 +53,7 @@ fn main() {
         print!("Trial {}: ", trial.pretty());
 
         // Create a random bit-vector ...
-        let bv: BitVec = BitVec::random_biased(len, prob);
+        let bv: BitVector = BitVector::random_biased(len, prob);
 
         // We will count the number of set bits one-by-one naively ...
         let mut n_set = 0;

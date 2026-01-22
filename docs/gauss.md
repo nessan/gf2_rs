@@ -33,8 +33,8 @@ For underdetermined systems, the "indexing" is something convenient and consiste
 
 ```rust
 use gf2::*;
-let mat: BitMat = BitMat::ones(4, 4);
-let b: BitVec = BitVec::ones(4);
+let mat: BitMatrix = BitMatrix::ones(4, 4);
+let b: BitVector = BitVector::ones(4);
 
 let solver: BitGauss = BitGauss::new(&mat, &b);
 println!("The matrix:\n{}", mat);
@@ -106,9 +106,9 @@ If more than one solution exists, the [`BitGauss::x`] method returns one of them
 
 - [`BitStore`](BitStore.md) for the concept API shared by all bit-stores.
 - [`BitArray`](BitArray.md) for fixed-size vectors of bits.
-- [`BitVec`](BitVec.md) for dynamically-sized vectors of bits.
+- [`BitVector`](BitVector.md) for dynamically-sized vectors of bits.
 - [`BitSlice`](BitSlice.md) for non-owning views into any bit-store.
-- [`BitPoly`](BitPoly.md) for polynomials over GF(2).
+- [`BitPolynomial`](BitPolynomial.md) for polynomials over GF(2).
 - [`BitLU`](BitLU.md) for LU decomposition of bit-matrices.
 
 <!-- Internal Reference Links -->

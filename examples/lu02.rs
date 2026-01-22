@@ -12,7 +12,7 @@ use gf2::*;
 use std::io::Write;
 
 fn main() {
-    type Mat = BitMat<usize>;
+    type Mat = BitMatrix<usize>;
 
     let n = 200;
     let n_trials = 500;
@@ -26,7 +26,7 @@ fn main() {
         if !LU.is_singular() {
             // Non-singular systems can be solved for random right-hand sides ...
             for _ in 0..n_trials {
-                let b = BitVec::random(n);
+                let b = BitVector::random(n);
                 let x = LU.x(&b).unwrap();
                 assert_eq!(&A * &x, b, "Oops! A * x != b");
             }

@@ -23,8 +23,8 @@ fn main() {
 
     // Two random vectors
     type Word = usize;
-    let mut u: BitVec<Word> = BitVec::random(n);
-    let v: BitVec<Word> = BitVec::random(n);
+    let mut u: BitVector<Word> = BitVector::random(n);
+    let v: BitVector<Word> = BitVector::random(n);
 
     // To do something in the loop, we count how often the dot product is 1.
     let mut count: usize = 0;
