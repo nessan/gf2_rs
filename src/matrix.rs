@@ -42,7 +42,7 @@ use std::{
     },
 };
 
-#[doc = include_str!("../docs/mat.md")]
+#[doc = include_str!("../docs/matrix.md")]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub struct BitMatrix<Word: Unsigned = usize> {
     /// The rows of the bit-matrix stored as a vector of bit-vectors.

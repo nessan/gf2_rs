@@ -23,7 +23,7 @@ use std::{
     },
 };
 
-#[doc = include_str!("../docs/poly.md")]
+#[doc = include_str!("../docs/polynomial.md")]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub struct BitPolynomial<Word: Unsigned = usize> {
     // The coefficient of `x^i` is stored in the `i`-th position of the vector.

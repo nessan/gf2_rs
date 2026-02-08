@@ -6,7 +6,7 @@ use crate::{
     Unsigned,
 };
 
-#[doc = include_str!("../docs/vec.md")]
+#[doc = include_str!("../docs/vector.md")]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub struct BitVector<Word: Unsigned = usize> {
     // The number of bits in the bit-vector.
