@@ -280,6 +280,31 @@ impl<Word: Unsigned> BitVector<Word> {
         result
     }
 
+    /// Constructs a bit-vector by copying all the bits from an iterator of `Unsigned` instances.
+    /// The length of the bit-vector will be `n * Src::UBITS` where `n` is the number of items in the iterator.
+    ///
+    /// # Examples
+    /// ```
+    /// use gf2::*;
+    /// let v: BitVector<u8> = BitVector::from_unsigneds([0b1010_1010_u8, 0b1100_1100_u8]);
+    /// assert_eq!(v.len(), 16);
+    /// assert_eq!(v.to_string(), "0101010100110011");
+    /// ```
+    #[must_use]
+    #[inline]
+    pub fn from_unsigneds<Src, SrcIter>(src_iter: SrcIter) -> Self
+    where
+        Src: Unsigned + TryInto<Word>,
+        SrcIter: IntoIterator<Item = Src>,
+        <SrcIter as IntoIterator>::IntoIter: ExactSizeIterator,
+    {
+        // We require `ExactSizeIterator` so we can size the bit-vector without collecting.
+        let iter = src_iter.into_iter();
+        let mut result = Self::zeros(iter.len() * Src::UBITS);
+        result.copy_unsigneds(iter);
+        result
+    }
+
     /// Construct a bit-vector by *copying* the bits from any bit-store.
     ///
     /// This is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying
@@ -774,6 +799,38 @@ impl<Word: Unsigned> BitVector<Word> {
         let old_len = self.len();
         self.resize(old_len + Src::UBITS);
         self.slice_mut(old_len..).copy_unsigned(src);
+        self
+    }
+
+    /// Appends all the bits from an iterator of unsigned values to the end of the bit-vector.
+    ///
+    /// # Examples
+    /// ```
+    /// use gf2::*;
+    /// let mut v: BitVector<u8> = BitVector::zeros(6);
+    /// v.append_unsigneds([u8::MAX, 0b1010_1010_u8]);
+    /// assert_eq!(v.len(), 22);
+    /// assert_eq!(v.to_string(), "0000001111111101010101");
+    /// ```
+    /// ```
+    /// use gf2::*;
+    /// let mut v: BitVector<u8> = BitVector::from_string("101").unwrap(); // unaligned start
+    /// v.append_unsigneds([0b1100_0011_u8]);
+    /// assert_eq!(v.len(), 11);
+    /// assert_eq!(v.to_string(), "10111000011");
+    /// ```
+    pub fn append_unsigneds<Src, SrcIter>(&mut self, src_iter: SrcIter) -> &mut Self
+    where
+        Src: Unsigned + TryInto<Word>,
+        SrcIter: IntoIterator<Item = Src>,
+        <SrcIter as IntoIterator>::IntoIter: ExactSizeIterator,
+    {
+        // We require `ExactSizeIterator` so we can size the bit-vector without collecting.
+        let iter = src_iter.into_iter();
+        let iter_bits = iter.len() * Src::UBITS;
+        let old_len = self.len();
+        self.resize(old_len + iter_bits);
+        self.slice_mut(old_len..).copy_unsigneds(iter);
         self
     }
 

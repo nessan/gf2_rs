@@ -105,6 +105,7 @@ The `BitVector` type provides several constructors to create bit-vectors with sp
 | [`BitVector::unit`]                 | Returns a bit-vector where all the elements are zero except for a single 1.                     |
 | [`BitVector::alternating`]          | Returns a bit-vector where all the elements follow the pattern `101010...`                      |
 | [`BitVector::from_unsigned`]        | Returns a bit-vector filled with bits from any [`Unsigned`] value.                              |
+| [`BitVector::from_unsigneds`]       | Returns a bit-vector filled with bits from an iteration of any [`Unsigned`] values.             |
 | [`BitVector::from_store`]           | Returns a bit-vector filled with bits from any bit-store.                                       |
 | [`BitVector::from_fn`]              | Returns a bit-vector filled with bits set by calling a function for each index.                 |
 | [`BitVector::random`]               | Returns a bit-vector filled by flipping a fair coin seeded from entropy.                        |
@@ -160,13 +161,14 @@ We have methods to query and manipulate the size and capacity of a bit-vector:
 
 We have methods to append elements from various sources to the end of a bit-vector:
 
-| Method Name                     | Description                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| [`BitVector::push`]             | Pushes a single bit (0 or 1) onto the end of the bit-vector.                   |
-| [`BitVector::append_unsigned`]  | Appends the bits from any unsigned integer value to the end of the bit-vector. |
-| [`BitVector::append_store`]     | Appends bits from another bit-store to the end of the bit-vector.              |
-| [`BitVector::append_digit`]     | Appends a "character's" worth of bits to the end of the bit-vector.            |
-| [`BitVector::append_hex_digit`] | Appends four bits from a "hex-character" to the end of the bit-vector.         |
+| Method Name                     | Description                                                                                         |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [`BitVector::push`]             | Pushes a single bit (0 or 1) onto the end of the bit-vector.                                        |
+| [`BitVector::append_unsigned`]  | Appends all the bits from any unsigned integer value to the end of the bit-vector.                  |
+| [`BitVector::append_unsigneds`] | Appends all the bits from an iteration of any unsigned integer values to the end of the bit-vector. |
+| [`BitVector::append_store`]     | Appends bits from another bit-store to the end of the bit-vector.                                   |
+| [`BitVector::append_digit`]     | Appends a "character's" worth of bits to the end of the bit-vector.                                 |
+| [`BitVector::append_hex_digit`] | Appends four bits from a "hex-character" to the end of the bit-vector.                              |
 
 The [`BitVector::append_store`] is one of the few methods in the library that _doesn't_ require the two stores to have the same underlying `Unsigned` word type for their storage -- i.e., the `Word` type for `self` may differ from the `SrcWord` type for the `src` bit-store.
 

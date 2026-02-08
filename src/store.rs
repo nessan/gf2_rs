@@ -476,6 +476,48 @@ pub trait BitStore<Word: Unsigned>: Sized {
         self
     }
 
+    /// Copies the bits from an iterator of unsigned values.
+    ///
+    /// # Notes:
+    /// 1. The size of the store *must* match the total number of bits in the iterator, i.e. `n * Src::UBITS`.
+    /// 2. We allow *any* unsigned word source, e.g. copying `u8` values into a `BitVector<u16>` of size 16.
+    /// 3. The least-significant bit of the first source word becomes bit index 0 in the store; subsequent sources fill
+    ///    consecutive ranges of `Src::UBITS` bits.
+    /// 4. The iterator must report an exact length (i.e. implement `ExactSizeIterator`).
+    ///
+    /// # Example
+    /// ```
+    /// use gf2::*;
+    /// let mut v: BitVector = BitVector::zeros(16);
+    /// let src = [0b1010_1010_u8, 0b1100_1100_u8];
+    /// v.copy_unsigneds(src);
+    /// assert_eq!(v.to_string(), "0101010100110011");
+    /// ```
+    fn copy_unsigneds<Src, SrcIter>(&mut self, src_iter: SrcIter) -> &mut Self
+    where
+        Src: Unsigned + TryInto<Word>,
+        SrcIter: IntoIterator<Item = Src>,
+        <SrcIter as IntoIterator>::IntoIter: ExactSizeIterator,
+    {
+        let iter = src_iter.into_iter();
+        let iter_bits = iter.len() * Src::UBITS;
+        assert_eq!(
+            self.len(),
+            iter_bits,
+            "Bit-length mismatch: store has {} bits but the iterator provides {} bits",
+            self.len(),
+            iter_bits
+        );
+
+        let mut offset = 0usize;
+        for src in iter {
+            let end = offset + Src::UBITS;
+            self.slice_mut(offset..end).copy_unsigned(src);
+            offset = end;
+        }
+        self
+    }
+
     /// Fills this bit-store with the bits from _any_ other bit-store `src` of the same length.
     ///
     /// # Note
@@ -1189,7 +1231,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// ```
     fn slice<R: RangeBounds<usize>>(&self, range: R) -> BitSlice<'_, Word> {
         let (start, end) = self.start_and_end_for(range);
-        BitSlice::new(self.store(), start, end)
+        let offset = self.offset() as usize;
+        BitSlice::new(self.store(), start + offset, end + offset)
     }
 
     /// Returns a mutable [`BitSlice`] of this store for the bits in the half-open range `[range.start, range.end)`.
@@ -1206,7 +1249,8 @@ pub trait BitStore<Word: Unsigned>: Sized {
     /// ```
     fn slice_mut<R: RangeBounds<usize>>(&mut self, range: R) -> BitSlice<'_, Word> {
         let (start, end) = self.start_and_end_for(range);
-        BitSlice::new_mut(self.store_mut(), start, end)
+        let offset = self.offset() as usize;
+        BitSlice::new_mut(self.store_mut(), start + offset, end + offset)
     }
 
     /// Helper method: Consumes a range and returns the corresponding `start` and `end` as a pair of `usize`s.

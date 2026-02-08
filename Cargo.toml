@@ -1,6 +1,6 @@
 [package]
 name = "gf2"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2024"
 authors = ["Nessan Fitzmaurice <nzznfitz+gh@icloud.com>"]
 description = "Working in bit-space a.k.a. GF(2)"

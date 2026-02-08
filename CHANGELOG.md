@@ -2,6 +2,15 @@
 
 All notable changes will be documented in this file.
 
+## Feb-2026
+
+- Fixed a bug that occurred when you took a sub-slice of a bit-slice.
+- Added methods to maintain feature compatibility with the C++ library:
+    - Added some methods to split a bit-polynomial into pieces.
+    - Added methods to copy all the bits from an _iteration_ of any unsigneds to an equal-size bit-store.
+    - Added methods to construct a bit-vector from an _iteration_ of any unsigned values.
+    - Added methods to append all the bits from an _iteration_ of any unsigneds to the end of a bit-vector.
+
 ## Jan-2026
 
 - Initial release of the project.

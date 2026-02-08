@@ -212,7 +212,8 @@ The following methods let you populate the entire store from multiple sources in
 
 | Method                                  | Description                                                                      |
 | --------------------------------------- | -------------------------------------------------------------------------------- |
-| [`BitStore::copy_unsigned`]             | Copies bit values from any unsigned value to this store.                         |
+| [`BitStore::copy_unsigned`]             | Copies the bit values from any single unsigned value to this store.              |
+| [`BitStore::copy_unsigneds`]            | Copies the bit values from an iteration of any unsigned values to this store.    |
 | [`BitStore::copy_store`]                | Copies bit values from any source store to this store.                           |
 | [`BitStore::copy_fn`]                   | Copies bit values from a function that returns a boolean for an index.           |
 | [`BitStore::fill_random_biased_seeded`] | Very general method to fill the store with random 0's and 1's.                   |
