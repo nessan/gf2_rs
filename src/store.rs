@@ -1151,6 +1151,26 @@ pub trait BitStore<Word: Unsigned>: Sized {
     #[inline]
     fn to_words(&self) -> Vec<Word> { self.store_words().collect() }
 
+    /// Fills the provided destination vector with the words underlying this bit-store.
+    ///
+    /// # Note
+    /// The destination is cleared before writing. The last word in the vector may not be fully occupied but unused
+    /// slots will be all zeros.
+    ///
+    /// # Examples
+    /// ```
+    /// use gf2::*;
+    /// let v: BitVector<u8> = BitVector::ones(10);
+    /// let mut words: Vec<u8> = Vec::new();
+    /// v.to_words_into(&mut words);
+    /// assert_eq!(words, vec![255, 3]);
+    /// ```
+    #[inline]
+    fn to_words_into(&self, dst: &mut Vec<Word>) {
+        dst.clear();
+        dst.extend(self.store_words());
+    }
+
     // ----------------------------------------------------------------------------------------------------------------
     // Associated methods to create slices of the store.
     // ----------------------------------------------------------------------------------------------------------------

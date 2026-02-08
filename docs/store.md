@@ -294,13 +294,14 @@ The following methods create iterators for traversing the bits or underlying wor
 - Read-only iteration through the indices of the unset bits.
 - Read-write iteration through the underlying store words.
 
-| Method                    | Description                                                                 |
-| ------------------------- | --------------------------------------------------------------------------- |
-| [`BitStore::bits`]        | Returns a [`Bits`] iterator over the bits in the store.                     |
-| [`BitStore::set_bits`]    | Returns a [`SetBits`] iterator to view the indices of all the set bits.     |
-| [`BitStore::unset_bits`]  | Returns a [`UnsetBits`] iterator to view the indices of all the unset bits. |
-| [`BitStore::store_words`] | Returns a [`Words`] iterator to view the "words" underlying the store.      |
-| [`BitStore::to_words`]    | Returns a copy of the "words" underlying the bit-store.                     |
+| Method                      | Description                                                                 |
+| --------------------------- | --------------------------------------------------------------------------- |
+| [`BitStore::bits`]          | Returns a [`Bits`] iterator over the bits in the store.                     |
+| [`BitStore::set_bits`]      | Returns a [`SetBits`] iterator to view the indices of all the set bits.     |
+| [`BitStore::unset_bits`]    | Returns a [`UnsetBits`] iterator to view the indices of all the unset bits. |
+| [`BitStore::store_words`]   | Returns a [`Words`] iterator to view the "words" underlying the store.      |
+| [`BitStore::to_words`]      | Returns a copy of the "words" underlying the bit-store.                     |
+| [`BitStore::to_words_into`] | Fills a destination vector with the "words" underlying the bit-store.       |
 
 ## Stringification
 
