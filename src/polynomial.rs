@@ -250,7 +250,7 @@ impl<Word: Unsigned> BitPolynomial<Word> {
     pub fn is_empty(&self) -> bool { self.coeffs.is_empty() }
 }
 
-/// Coefficient read and write methods for bit=polynomials.
+/// Coefficient read and write methods for bit-polynomials.
 impl<Word: Unsigned> BitPolynomial<Word> {
     /// Returns a reference to the coefficients of the bit-polynomial as a read-only borrowed bit-vector.
     ///
@@ -269,6 +269,24 @@ impl<Word: Unsigned> BitPolynomial<Word> {
     #[must_use]
     #[inline]
     pub fn coefficients(&self) -> &BitVector<Word> { &self.coeffs }
+
+    /// Returns a reference to the coefficients of the bit-polynomial as a read-write borrowed bit-vector.
+    ///
+    /// # Note
+    /// You can use this method to get a reference to the polynomial's coefficients as a bit-vector.
+    /// Then all the many read-only methods of the [`BitVector`] type are available.
+    ///
+    /// # Examples
+    /// ```
+    /// use gf2::*;
+    /// let coeffs: BitVector = BitVector::from_string("101010").unwrap();
+    /// let mut p: BitPolynomial = BitPolynomial::from_coefficients(coeffs);
+    /// p.coefficients_mut().set_all(true);
+    /// assert_eq!(p.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5");
+    /// ```
+    #[must_use]
+    #[inline]
+    pub fn coefficients_mut(&mut self) -> &mut BitVector<Word> { &mut self.coeffs }
 
     /// Returns the coefficient of `x^i` for `i`.
     ///
@@ -377,6 +395,118 @@ impl<Word: Unsigned> BitPolynomial<Word> {
         if self.is_non_zero() {
             self.coeffs.resize(self.degree() + 1);
         }
+    }
+}
+
+/// Methods to extract pieces of a bit-polynomial.
+impl<Word: Unsigned> BitPolynomial<Word> {
+    /// Makes the destination bit-polynomial a copy of the low `d + 1` coefficients of this bit-polynomial.
+    /// The destination bit-polynomial will have degree at most `d`.
+    ///
+    /// # Example
+    /// ```
+    /// use gf2::*;
+    /// let p: BitPolynomial = BitPolynomial::ones(6);
+    /// assert_eq!(p.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// let mut q: BitPolynomial = BitPolynomial::zero();
+    /// p.sub_polynomial_into(4, &mut q);
+    /// assert_eq!(q.to_string(), "1 + x + x^2 + x^3 + x^4");
+    /// p.sub_polynomial_into(6, &mut q);
+    /// assert_eq!(q.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// p.sub_polynomial_into(16, &mut q);
+    /// assert_eq!(q.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// p.sub_polynomial_into(0, &mut q);
+    /// assert_eq!(q.to_string(), "1");
+    /// ```
+    pub fn sub_polynomial_into(&self, d: usize, dst: &mut BitPolynomial<Word>) {
+        dst.resize((d + 1).min(self.coeffs.len()));
+        if d == 0 {
+            *dst = BitPolynomial::<Word>::constant(self.coeffs.get(0));
+        }
+        else if d + 1 >= self.coeffs.len() {
+            *dst = self.clone();
+        }
+        else {
+            dst.coeffs.copy_store(&self.coeffs.slice(0..d + 1));
+        }
+    }
+
+    /// Returns a new bit-polynomial that is a copy of the low `d + 1` coefficients of this bit-polynomial.
+    /// The destination bit-polynomial will have degree at most `d`.
+    ///
+    /// # Example
+    /// ```
+    /// use gf2::*;
+    /// let p: BitPolynomial = BitPolynomial::ones(6);
+    /// assert_eq!(p.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// let q = p.sub_polynomial(4);
+    /// assert_eq!(q.to_string(), "1 + x + x^2 + x^3 + x^4");
+    /// let q = p.sub_polynomial(6);
+    /// assert_eq!(q.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// let q = p.sub_polynomial(16);
+    /// assert_eq!(q.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// let q = p.sub_polynomial(0);
+    /// assert_eq!(q.to_string(), "1");
+    /// ```
+    pub fn sub_polynomial(&self, d: usize) -> BitPolynomial<Word> {
+        let mut dst = BitPolynomial::<Word>::zero();
+        self.sub_polynomial_into(d, &mut dst);
+        dst
+    }
+
+    /// Splits the bit-polynomial into a low and high part where the low part has degree at most `d`.
+    /// On return `self(x) = low(x) + x^(d+1) * high(x)`.
+    ///
+    /// # Example
+    /// ```
+    /// use gf2::*;
+    /// let p: BitPolynomial = BitPolynomial::ones(6);
+    /// assert_eq!(p.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// let mut low: BitPolynomial = BitPolynomial::zero();
+    /// let mut high: BitPolynomial = BitPolynomial::zero();
+    /// p.split_into(4, &mut low, &mut high);
+    /// assert_eq!(low.to_string(), "1 + x + x^2 + x^3 + x^4");
+    /// assert_eq!(high.to_string(), "1 + x");
+    /// p.split_into(6, &mut low, &mut high);
+    /// assert_eq!(low.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// assert_eq!(high.to_string(), "0");
+    /// p.split_into(0, &mut low, &mut high);
+    /// assert_eq!(low.to_string(), "1");
+    /// assert_eq!(high.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5");
+    /// ```
+    pub fn split_into(&self, d: usize, lo: &mut BitPolynomial<Word>, hi: &mut BitPolynomial<Word>) {
+        let len = self.coeffs.len();
+        let split = (d + 1).min(len);
+        let hi_len = len.saturating_sub(d + 1);
+
+        lo.resize(split);
+        hi.resize(hi_len);
+
+        if split > 0 {
+            lo.coeffs.copy_store(&self.coeffs.slice(0..split));
+        }
+        if hi_len > 0 {
+            hi.coeffs.copy_store(&self.coeffs.slice(d + 1..len));
+        }
+    }
+
+    /// Splits the bit-polynomial into a low and high part where the low part has degree at most `d`.
+    /// Returns `(low, high)` such that `self(x) = low(x) + x^(d+1) * high(x)`.
+    ///
+    /// # Example
+    /// ```
+    /// use gf2::*;
+    /// let p: BitPolynomial = BitPolynomial::ones(6);
+    /// assert_eq!(p.to_string(), "1 + x + x^2 + x^3 + x^4 + x^5 + x^6");
+    /// let (low, high) = p.split(4);
+    /// assert_eq!(low.to_string(), "1 + x + x^2 + x^3 + x^4");
+    /// assert_eq!(high.to_string(), "1 + x");
+    /// ```
+    pub fn split(&self, d: usize) -> (BitPolynomial<Word>, BitPolynomial<Word>) {
+        let mut lo = BitPolynomial::<Word>::zero();
+        let mut hi = BitPolynomial::<Word>::zero();
+        self.split_into(d, &mut lo, &mut hi);
+        (lo, hi)
     }
 }
 

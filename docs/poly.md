@@ -86,19 +86,37 @@ Both those polynomials have degree 3.
 
 There are methods to access and modify the polynomial coefficients either individually or as a whole:
 
-| Method Name                      | Description                                                                 |
-| -------------------------------- | --------------------------------------------------------------------------- |
-| [`BitPolynomial::coefficients`]  | Returns a read-only reference to the coefficient bit-vector.                |
-| [`BitPolynomial::coeff`]         | Returns the value of a coefficients as a boolean.                           |
-| [`BitPolynomial::set_coeff`]     | Sets a coefficient to the passed boolean value.                             |
-| [`BitPolynomial::clear`]         | Sets the polynomial back to `p(x) ≡ 0`.                                     |
-| [`BitPolynomial::resize`]        | Resizes the polynomial to have the `n` coefficients (added ones are zeros). |
-| [`BitPolynomial::shrink_to_fit`] | Calls [`BitVector::shrink_to_fit`] on the coefficient bit-vector.           |
-| [`BitPolynomial::make_monic`]    | Kills any high order zero coefficients to make the polynomial _monic_.      |
+| Method Name                         | Description                                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------- |
+| [`BitPolynomial::coefficients`]     | Returns a read-only reference to the coefficient bit-vector.                |
+| [`BitPolynomial::coefficients_mut`] | Returns a read-write reference to the coefficient bit-vector.               |
+| [`BitPolynomial::coeff`]            | Returns the value of a coefficients as a boolean.                           |
+| [`BitPolynomial::set_coeff`]        | Sets a coefficient to the passed boolean value.                             |
+| [`BitPolynomial::clear`]            | Sets the polynomial back to `p(x) ≡ 0`.                                     |
+| [`BitPolynomial::resize`]           | Resizes the polynomial to have the `n` coefficients (added ones are zeros). |
+| [`BitPolynomial::shrink_to_fit`]    | Calls [`BitVector::shrink_to_fit`] on the coefficient bit-vector.           |
+| [`BitPolynomial::make_monic`]       | Kills any high order zero coefficients to make the polynomial _monic_.      |
 
-The [`BitPolynomial::coeff`] and [`BitPolynomial::set_coeff`] methods range check the coefficient index in debug builds.
+In debug builds, the [`BitPolynomial::coeff`] and [`BitPolynomial::set_coeff`] methods range check the coefficient index.
 
 **Note:** We have also implemented the [`std::ops::Index`] foreign trait to provide indexing operator for coefficient access. That forwards to the [`BitPolynomial::coeff`] method.
+
+## Polynomial Pieces
+
+We have methods to extract pieces of a bit-polynomial, either copied into existing destinations or returned as new bit-polynomials.
+
+| Method Name                            | Description                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| [`BitPolynomial::sub_polynomial`]      | Returns a new bit-polynomial that is a sub-polynomial of this one.        |
+| [`BitPolynomial::sub_polynomial_into`] | Makes the passed destination bit-polynomial a sub-polynomial of this one. |
+| [`BitPolynomial::split`]               | Returns a pair of new bit-polynomials, which "sum" to this one.           |
+| [`BitPolynomial::split_into`]          | Makes the passed destination bit-polynomial "sum" to this one.            |
+
+In the `split` methods the "sum" is a factored sum.
+
+If `p` is a bit-polynomial of degree `n` then `p.split(d)` returns a pair of bit-polynomials `(lo, hi)`, where `p(x) = lo(x) + x^{d+1} hi(x)`.
+
+The degree of `lo` is at most `d` and we have factored an `x{d+1}` term out of `hi` so it has degree `n - d - 1`.
 
 ## Arithmetic Operations
 
